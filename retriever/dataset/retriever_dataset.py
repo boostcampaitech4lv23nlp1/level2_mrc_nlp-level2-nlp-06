@@ -8,7 +8,8 @@ class RetrieverDataset(Dataset):
         self.config = config
         self.train = train
         self.tokenizer = AutoTokenizer.from_pretrained(config["model_name_or_path"])
-        self.dataset = load_from_disk(config["num_negative_passages_per_question"])
+        print(config["num_negative_passages_per_question"])
+        self.dataset = load_from_disk(config["train_data_path"])
         self.negative_sampled_passage_batch = None
         self.tokenized_questions = None
         if train:
@@ -32,6 +33,9 @@ class RetrieverDataset(Dataset):
             )
         else:
             pass
+        
+    def __len__(self):
+        return len(self.dataset)
 
     def construct_negative_sampled_batch(self):
         corpus = np.array(list(set([example for example in self.dataset["context"]])))
