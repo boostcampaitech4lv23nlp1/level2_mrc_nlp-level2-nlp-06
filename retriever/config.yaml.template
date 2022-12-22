@@ -5,6 +5,7 @@ batch_size: 8
 weight_decay: 0.01
 learning_rate: 2.e-5
 warmup_ratio: 0.5
+epochs: 2
 
 p_encoder_save_path: "path to save passage encoder in '.pt' format"
 q_encoder_save_path: "path to save question encoder in '.pt' format"
