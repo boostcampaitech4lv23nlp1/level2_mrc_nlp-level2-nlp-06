@@ -10,3 +10,6 @@ p_encoder_save_path: "path to save passage encoder in '.pt' format"
 q_encoder_save_path: "path to save question encoder in '.pt' format"
 
 embedding_path: "path to save corpus features in .npy format."
+
+model_name_or_path: "klue/bert-base"
+
