@@ -37,9 +37,7 @@ class RetrieverTrainer:
             weight_decay=self.config["weight_decay"]
         )
         
-        
         self.train_datasets = RetrieverDataset(self.config)
-        self.valid_datasets = RetrieverDataset(self.config)
         
         self.p_encoder = DenseRetriever(self.config).to(config["device"])
         self.q_encoder = DenseRetriever(self.config).to(config["device"])
@@ -103,17 +101,17 @@ class RetrieverTrainer:
                     torch.cuda.empty_cache()
                     
             
-            with tqdm(valid_dataloader, unit="batch") as tepoch:
-                for batch in tepoch:
-                    self.p_encoder.eval()
-                    self.q_encoder.eval()
-                    with torch.no_grad():
-                        _, _, sim_scores = self.forward_step(batch)
-                    sim_scores = F.log_softmax(sim_scores, dim=-1)
-                    loss = F.nll_loss(sim_scores, targets)
-                    tepoch.set_postfix(loss=f"{str(loss.item())}")
+            # with tqdm(valid_dataloader, unit="batch") as tepoch:
+            #     for batch in tepoch:
+            #         self.p_encoder.eval()
+            #         self.q_encoder.eval()
+            #         with torch.no_grad():
+            #             _, _, sim_scores = self.forward_step(batch)
+            #         sim_scores = F.log_softmax(sim_scores, dim=-1)
+            #         loss = F.nll_loss(sim_scores, targets)
+            #         tepoch.set_postfix(loss=f"{str(loss.item())}")
                     
-                    torch.cuda.empty_cache()
+            #         torch.cuda.empty_cache()
 
                     
     def forward_step(self, batch):
@@ -152,7 +150,7 @@ class RetrieverTrainer:
     
 
 def main(config):
-    set_seed(config.random_seed)
+    set_seed(config["random_seed"])
     
     trainer = RetrieverTrainer(config)
     trainer.train()
