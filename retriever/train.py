@@ -42,10 +42,12 @@ class RetrieverTrainer:
         self.p_encoder = DenseRetriever(self.config).to(config["device"])
         self.q_encoder = DenseRetriever(self.config).to(config["device"])
         
+        self.num_neg = self.config["num_negative_passages_per_question"]
+        
         
     def train(self):
         train_dataloader = DataLoader(self.train_datasets, batch_size=self.config["batch_size"])
-        valid_dataloader = DataLoader(self.valid_datasets, batch_size=self.config["batch_size"])
+        # valid_dataloader = DataLoader(self.valid_datasets, batch_size=self.config["batch_size"])
         
         # Optimizer
         no_decay = ["bias", "LayerNorm.weight"]
@@ -82,7 +84,7 @@ class RetrieverTrainer:
                     self.q_encoder.train()
                     _, _, sim_scores = self.forward_step(batch)
                     # In-batch negative 적용 시 바꿔야 하는 부분.
-                    targets = torch.zeros(batch.shape[0]).long()
+                    targets = torch.zeros(batch[0].shape[0]).long()
                     targets = targets.to(self.args.device)
                     
                     sim_scores = F.log_softmax(sim_scores, dim=-1)
