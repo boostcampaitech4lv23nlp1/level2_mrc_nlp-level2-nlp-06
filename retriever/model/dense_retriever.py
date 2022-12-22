@@ -19,7 +19,7 @@ class DenseRetriever(nn.Module):
 
         self.config = config
         self.model = AutoModel.from_pretrained(
-            config.model_name_or_path
+            config["model_name_or_path"]
         )
 
     def forward(self, input_ids, attention_mask=None, token_type_ids=None):
