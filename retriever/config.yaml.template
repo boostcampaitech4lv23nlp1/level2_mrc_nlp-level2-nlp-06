@@ -6,6 +6,11 @@ weight_decay: 0.01
 learning_rate: 2.e-5
 warmup_ratio: 0.5
 
+p_encoder_save_path: "path to save passage encoder in '.pt' format"
+q_encoder_save_path: "path to save question encoder in '.pt' format"
+
+embedding_path: "path to save corpus features in .npy format."
+
 model_name_or_path: "klue/bert-base"
 train_data_path: "../../../input/data/train_dataset"
 num_negative_passages_per_question: 2
