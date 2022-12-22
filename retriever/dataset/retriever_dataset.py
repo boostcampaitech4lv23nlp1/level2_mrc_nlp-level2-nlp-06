@@ -8,7 +8,7 @@ class RetrieverDataset(Dataset):
         self.config = config
         self.train = train
         self.tokenizer = AutoTokenizer.from_pretrained(config["model_name_or_path"])
-        self.dataset = load_from_disk("../../../input/data/train_dataset/")
+        self.dataset = load_from_disk(config["num_negative_passages_per_question"])
         self.negative_sampled_passage_batch = None
         self.tokenized_questions = None
         if train:
