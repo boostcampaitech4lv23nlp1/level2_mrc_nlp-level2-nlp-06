@@ -33,6 +33,9 @@ class RetrieverDataset(Dataset):
         )
         self.negative_sampled_passage_batch = None
         self.tokenized_questions = None
+        self.max_length = 512
+        self.stride = 128
+        
         if mode == "train":
             print(
                 "RetrieverDataset > __init__: You are currently in the TRAINING process. It will construct in-batch negative samples."
