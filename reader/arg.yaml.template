@@ -1,8 +1,10 @@
+#model argument
 model_name: "klue/bert-base"
 model_path: './result/baseline'             #model을 불러올 경우 설정, 아닐경우 null
 config_name: null
 tokenizer_name: null
 
+#data argument
 dataset_name: "../../input/data/train_dataset"
 overwrite_cache: False
 preprocessing_num_workers: null
@@ -10,10 +12,8 @@ max_seq_length: 384
 pad_to_max_length: False
 doc_stride: 128
 max_answer_length: 30
-eval_retrieval: True
-num_clusters: 64
-top_k_retrieval: 10
 
+#trainer argument
 do_train: True
 do_eval: True
 checkpoint_dir: './result/baseline'
