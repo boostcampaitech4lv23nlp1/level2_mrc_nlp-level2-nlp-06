@@ -5,6 +5,7 @@ import torch
 from torch.utils.data import DataLoader
 from torch.optim import AdamW
 import torch.nn.functional as F
+from torchmetrics import Accuracy
 from transformers import TrainingArguments, get_linear_schedule_with_warmup
 import random
 import numpy as np
@@ -86,10 +87,13 @@ class RetrieverTrainer:
                     # In-batch negative 적용 시 바꿔야 하는 부분.
                     targets = torch.zeros(batch[0].shape[0]).long()
                     targets = targets.to(self.args.device)
+                    accuracy = Accuracy(task="multiclass", num_classes=batch[0].shape[0], top_k=1)
                     
                     sim_scores = F.log_softmax(sim_scores, dim=-1)
+                    acc = accuracy(sim_scores, targets)
+                    
                     loss = F.nll_loss(sim_scores, targets)
-                    tepoch.set_postfix(loss=f"{str(loss.item())}")
+                    tepoch.set_postfix(loss=f"{str(loss.item())}", accuracy=f"{str(acc.item())}")
                     
                     loss.backward()
                     self.optimizer.step()
@@ -109,9 +113,12 @@ class RetrieverTrainer:
                     self.q_encoder.eval()
                     with torch.no_grad():
                         _, _, sim_scores = self.forward_step(batch)
+                    accuracy = Accuracy(task="multiclass", num_classes=batch[0].shape[0], top_k=1)
                     sim_scores = F.log_softmax(sim_scores, dim=-1)
+                    acc = accuracy(sim_scores, targets)
+                    
                     loss = F.nll_loss(sim_scores, targets)
-                    tepoch.set_postfix(loss=f"{str(loss.item())}")
+                    tepoch.set_postfix(loss=f"{str(loss.item())}", accuracy=f"{str(acc.item())}")
                     
                     torch.cuda.empty_cache()
 
