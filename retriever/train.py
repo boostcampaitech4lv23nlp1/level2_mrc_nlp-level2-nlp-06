@@ -19,8 +19,8 @@ def set_seed(random_seed):
     torch.cuda.manual_seed_all(random_seed)  # if use multi-GPU
     random.seed(random_seed)
     np.random.seed(random_seed)
-    
-    
+
+
 class RetrieverTrainer:
     # Train 옵션 설정.
     def __init__(self, config):
@@ -36,19 +36,20 @@ class RetrieverTrainer:
             num_train_epochs=self.config["epochs"],
             weight_decay=self.config["weight_decay"]
         )
-        
+
         self.train_datasets = RetrieverDataset(self.config)
-        
+        self.valid_datasets = RetrieverDataset(self.config, mode="validation")
+
         self.p_encoder = DenseRetriever(self.config).to(config["device"])
         self.q_encoder = DenseRetriever(self.config).to(config["device"])
-        
+
         self.num_neg = self.config["num_negative_passages_per_question"]
-        
-        
+
+
     def train(self):
         train_dataloader = DataLoader(self.train_datasets, batch_size=self.config["batch_size"])
-        # valid_dataloader = DataLoader(self.valid_datasets, batch_size=self.config["batch_size"])
-        
+        valid_dataloader = DataLoader(self.valid_datasets, batch_size=self.config["batch_size"])
+
         # Optimizer
         no_decay = ["bias", "LayerNorm.weight"]
         optimizer_grouped_parameters = [
@@ -68,14 +69,14 @@ class RetrieverTrainer:
             num_warmup_steps=int(self.config["warmup_ratio"]*t_total),
             num_training_steps=t_total
         )
-        
+
         # Start training!
         global_step = 0
-        
+
         self.p_encoder.zero_grad()
         self.q_encoder.zero_grad()
         torch.cuda.empty_cache()
-        
+
         train_iterator = trange(int(self.config["epochs"]), desc="Epoch")
         for _ in train_iterator:
             with tqdm(train_dataloader, unit="batch") as tepoch:
@@ -102,20 +103,20 @@ class RetrieverTrainer:
                     
                     torch.cuda.empty_cache()
                     
-            
-            # with tqdm(valid_dataloader, unit="batch") as tepoch:
-            #     for batch in tepoch:
-            #         self.p_encoder.eval()
-            #         self.q_encoder.eval()
-            #         with torch.no_grad():
-            #             _, _, sim_scores = self.forward_step(batch)
-            #         sim_scores = F.log_softmax(sim_scores, dim=-1)
-            #         loss = F.nll_loss(sim_scores, targets)
-            #         tepoch.set_postfix(loss=f"{str(loss.item())}")
-                    
-            #         torch.cuda.empty_cache()
 
+            with tqdm(valid_dataloader, unit="batch") as tepoch:
+                for batch in tepoch:
+                    self.p_encoder.eval()
+                    self.q_encoder.eval()
+                    with torch.no_grad():
+                        _, _, sim_scores = self.forward_step(batch)
+                    sim_scores = F.log_softmax(sim_scores, dim=-1)
+                    loss = F.nll_loss(sim_scores, targets)
+                    tepoch.set_postfix(loss=f"{str(loss.item())}")
                     
+                    torch.cuda.empty_cache()
+
+
     def forward_step(self, batch):
         batch_size = batch[0].shape[0]
 
@@ -130,35 +131,35 @@ class RetrieverTrainer:
             "attention_mask": batch[4].to(self.args.device),
             "token_type_ids": batch[5].to(self.args.device)
         }
-        
+
         del batch
         torch.cuda.empty_cache()
         p_outputs = self.p_encoder(**p_inputs)
         q_outputs = self.q_encoder(**q_inputs)
-        
+
         p_outputs = p_outputs.view(batch_size, self.num_neg + 1, -1)
         q_outputs = q_outputs.view(batch_size, 1, -1)
-        
+
         sim_scores = torch.bmm(q_outputs, torch.transpose(p_outputs, 1, 2)).squeeze()
         sim_scores = sim_scores.view(batch_size, -1)
-        
+
         del q_inputs, p_inputs
-        
+
         return p_outputs, q_outputs, sim_scores
     
     def save_models(self):
         torch.save(self.p_encoder.state_dict(), self.config["p_encoder_save_path"])
         torch.save(self.q_encoder.state_dict(), self.config["q_encoder_save_path"])
-    
+
 
 def main(config):
     set_seed(config["random_seed"])
-    
+
     trainer = RetrieverTrainer(config)
     trainer.train()
     trainer.save_models()
-    
-    
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='config for retriever.')
     parser.add_argument("--conf", type=str, default="config.yaml", help="config file path(.yaml)")
@@ -166,4 +167,3 @@ if __name__ == "__main__":
     with open(args.conf, "r") as f:
         config = yaml.load(f, Loader=yaml.Loader)
     main(config)
-    
