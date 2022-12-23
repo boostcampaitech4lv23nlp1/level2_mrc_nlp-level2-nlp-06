@@ -1,0 +1,27 @@
+model_name: "klue/bert-base"
+model_path: './result/baseline'             #model을 불러올 경우 설정, 아닐경우 null
+config_name: null
+tokenizer_name: null
+
+dataset_name: "../../input/data/train_dataset"
+overwrite_cache: False
+preprocessing_num_workers: null
+max_seq_length: 384
+pad_to_max_length: False
+doc_stride: 128
+max_answer_length: 30
+eval_retrieval: True
+num_clusters: 64
+top_k_retrieval: 10
+
+do_train: True
+do_eval: True
+checkpoint_dir: './result/baseline'
+save_steps: 500
+num_train_epochs: 2
+learning_rate: 5.0e-5
+batch_size: 8
+warmup_steps: 0
+weight_decay: 0.0
+eval_steps: 500
+overwrite_output_dir: True        #False면 checkpoint_dir에 파일이 존재할 경우 에러가 발생하며 멈춤
