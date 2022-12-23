@@ -22,9 +22,7 @@ def set_seed(random_seed):
 
 
 class RetrieverTrainer:
-    # Train 옵션 설정.
     def __init__(self, config):
-        # yaml 이용해서 config 받아온다고 가정.
         self.config = config
         
         self.args = TrainingArguments(
