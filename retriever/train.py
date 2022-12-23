@@ -9,7 +9,6 @@ from torchmetrics import Accuracy
 from transformers import TrainingArguments, get_linear_schedule_with_warmup
 import random
 import numpy as np
-from tqdm import trange, tqdm
 import argparse
 import yaml
 import wandb
@@ -79,48 +78,53 @@ class RetrieverTrainer:
         self.q_encoder.zero_grad()
         torch.cuda.empty_cache()
 
-        train_iterator = trange(int(self.config["epochs"]), desc="Epoch")
-        for _ in train_iterator:
-            with tqdm(train_dataloader, unit="batch") as tepoch:
-                for batch in tepoch:
-                    self.p_encoder.train()
-                    self.q_encoder.train()
+        wandb.init(
+            project=config["wandb_project"], 
+            name=config["wandb_name"], 
+            notes=config["wandb_note"], 
+            entity=config["wandb_entity"], 
+            group=config["wandb_group"],
+            config=config
+        )
+        for epoch in range(config["epochs"]):
+            for batch in train_dataloader:
+                self.p_encoder.train()
+                self.q_encoder.train()
+                _, _, sim_scores = self.forward_step(batch)
+                # In-batch negative 적용 시 바꿔야 하는 부분.
+                targets = torch.zeros(batch[0].shape[0]).long()
+                targets = targets.to(self.args.device)
+                
+                sim_scores = F.log_softmax(sim_scores, dim=-1)
+
+                acc = accuracy(sim_scores, targets)
+                loss = F.nll_loss(sim_scores, targets)
+                wandb.log({"train_accuracy": acc, "train_loss": loss, "epoch": epoch})
+                
+                loss.backward()
+                self.optimizer.step()
+                self.scheduler.step()
+                
+                self.q_encoder.zero_grad()
+                self.p_encoder.zero_grad()
+                
+                global_step += 1
+                
+                torch.cuda.empty_cache()
+                    
+
+            for batch in valid_dataloader:
+                self.p_encoder.eval()
+                self.q_encoder.eval()
+                with torch.no_grad():
                     _, _, sim_scores = self.forward_step(batch)
-                    # In-batch negative 적용 시 바꿔야 하는 부분.
-                    targets = torch.zeros(batch[0].shape[0]).long()
-                    targets = targets.to(self.args.device)
-                    
-                    sim_scores = F.log_softmax(sim_scores, dim=-1)
+                sim_scores = F.log_softmax(sim_scores, dim=-1)
 
-                    acc = accuracy(sim_scores, targets)
-                    loss = F.nll_loss(sim_scores, targets)
-                    tepoch.set_postfix(loss=f"{str(loss.item())}", accuracy=f"{str(acc.item())}")
-                    
-                    loss.backward()
-                    self.optimizer.step()
-                    self.scheduler.step()
-                    
-                    self.q_encoder.zero_grad()
-                    self.p_encoder.zero_grad()
-                    
-                    global_step += 1
-                    
-                    torch.cuda.empty_cache()
-                    
-
-            with tqdm(valid_dataloader, unit="batch") as tepoch:
-                for batch in tepoch:
-                    self.p_encoder.eval()
-                    self.q_encoder.eval()
-                    with torch.no_grad():
-                        _, _, sim_scores = self.forward_step(batch)
-                    sim_scores = F.log_softmax(sim_scores, dim=-1)
-
-                    acc = accuracy(sim_scores, targets)                    
-                    loss = F.nll_loss(sim_scores, targets)
-                    tepoch.set_postfix(loss=f"{str(loss.item())}", accuracy=f"{str(acc.item())}")
-                    
-                    torch.cuda.empty_cache()
+                acc = accuracy(sim_scores, targets)
+                loss = F.nll_loss(sim_scores, targets)
+                wandb.log({"valid_accuracy": acc, "valid_loss": loss, "epoch": epoch})
+                
+                torch.cuda.empty_cache()
 
 
     def forward_step(self, batch):
@@ -162,14 +166,6 @@ def main(config):
     set_seed(config["random_seed"])
 
     trainer = RetrieverTrainer(config)
-    # wandb.init(
-    #     project=config["wandb_project"], 
-    #     name=config["wandb_name"], 
-    #     notes=config["wandb_note"], 
-    #     entity=config["wandb_entity"], 
-    #     group=config["wandb_group"],
-    #     config=config
-    # )
     trainer.train()
     trainer.save_models()
 
