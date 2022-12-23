@@ -1,6 +1,7 @@
 import numpy as np
 from transformers import AutoTokenizer
 from datasets import Dataset, load_from_disk
+from .utils import Preprocess_features
 
 
 class RetrieverDataset(Dataset):
@@ -35,6 +36,7 @@ class RetrieverDataset(Dataset):
         self.tokenized_questions = None
         self.max_length = 512
         self.stride = 128
+        self.PE = Preprocess_features(self.tokenizer, self.max_length, self.stride)
         
         if mode == "train":
             print(
