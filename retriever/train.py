@@ -69,6 +69,8 @@ class RetrieverTrainer:
             num_warmup_steps=int(self.config["warmup_ratio"]*t_total),
             num_training_steps=t_total
         )
+        
+        accuracy = Accuracy(task="multiclass", num_classes=self.num_neg+1, top_k=1).to(config["device"])
 
         # Start training!
         global_step = 0
@@ -87,11 +89,10 @@ class RetrieverTrainer:
                     # In-batch negative 적용 시 바꿔야 하는 부분.
                     targets = torch.zeros(batch[0].shape[0]).long()
                     targets = targets.to(self.args.device)
-                    accuracy = Accuracy(task="multiclass", num_classes=batch[0].shape[0], top_k=1)
                     
                     sim_scores = F.log_softmax(sim_scores, dim=-1)
+
                     acc = accuracy(sim_scores, targets)
-                    
                     loss = F.nll_loss(sim_scores, targets)
                     tepoch.set_postfix(loss=f"{str(loss.item())}", accuracy=f"{str(acc.item())}")
                     
@@ -113,10 +114,9 @@ class RetrieverTrainer:
                     self.q_encoder.eval()
                     with torch.no_grad():
                         _, _, sim_scores = self.forward_step(batch)
-                    accuracy = Accuracy(task="multiclass", num_classes=batch[0].shape[0], top_k=1)
                     sim_scores = F.log_softmax(sim_scores, dim=-1)
-                    acc = accuracy(sim_scores, targets)
-                    
+
+                    acc = accuracy(sim_scores, targets)                    
                     loss = F.nll_loss(sim_scores, targets)
                     tepoch.set_postfix(loss=f"{str(loss.item())}", accuracy=f"{str(acc.item())}")
                     
@@ -162,14 +162,14 @@ def main(config):
     set_seed(config["random_seed"])
 
     trainer = RetrieverTrainer(config)
-    wandb.init(
-        project=config["wandb_project"], 
-        name=config["wandb_name"], 
-        notes=config["wandb_note"], 
-        entity=config["wandb_entity"], 
-        group=config["wandb_group"],
-        config=config
-    )
+    # wandb.init(
+    #     project=config["wandb_project"], 
+    #     name=config["wandb_name"], 
+    #     notes=config["wandb_note"], 
+    #     entity=config["wandb_entity"], 
+    #     group=config["wandb_group"],
+    #     config=config
+    # )
     trainer.train()
     trainer.save_models()
 
