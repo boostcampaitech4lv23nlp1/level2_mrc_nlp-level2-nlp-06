@@ -131,8 +131,6 @@ dmypy.json
 
 # User added
 *.yaml
-./reader/result
-./reader/wandb
-./retrieval/result
-./retrieval/wandb
+result/
+wandb/
 *.ipynb
