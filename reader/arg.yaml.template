@@ -25,3 +25,9 @@ warmup_steps: 0
 weight_decay: 0.0
 eval_steps: 500
 overwrite_output_dir: True        #False면 checkpoint_dir에 파일이 존재할 경우 에러가 발생하며 멈춤
+
+#wandb argument
+wandb_project: 'huggingface'
+wandb_name: 'baseline_test'
+wandb_note: 'test'
+wandb_group: null

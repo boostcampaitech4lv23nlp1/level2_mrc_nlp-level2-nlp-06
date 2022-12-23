@@ -25,12 +25,12 @@ logger = logging.getLogger(__name__)
 
 
 def main():
-    wandb.init(project="huggingface",name="baselinetest",notes="test")
 
     set_seed(6)
 
     with open("arg.yaml","r") as f:
         args = yaml.load(f,Loader = yaml.Loader)
+    wandb.init(project=args["wandb_project"],name=args["wandb_name"],notes=args["wandb_note"],group=args["wandb_group"])
 
     training_args = TrainingArguments(
             output_dir=args['checkpoint_dir'],
