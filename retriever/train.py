@@ -11,6 +11,7 @@ import numpy as np
 from tqdm import trange, tqdm
 import argparse
 import yaml
+import wandb
 
 
 def set_seed(random_seed):
@@ -154,6 +155,14 @@ def main(config):
     set_seed(config["random_seed"])
 
     trainer = RetrieverTrainer(config)
+    wandb.init(
+        project=config["wandb_project"], 
+        name=config["wandb_name"], 
+        notes=config["wandb_note"], 
+        entity=config["wandb_entity"], 
+        group=config["wandb_group"],
+        config=config
+    )
     trainer.train()
     trainer.save_models()
 
