@@ -1,6 +1,10 @@
 random_seed: 42
 device: 'cuda'
 
+wandb_name: "experience name"
+wandb_note: "note for experience"
+wandb_group: "group name of experience"
+
 batch_size: 8
 weight_decay: 0.01
 learning_rate: 2.e-5
@@ -15,3 +19,6 @@ embedding_path: "path to save corpus features in .npy format."
 model_name_or_path: "klue/bert-base"
 train_data_path: "path to import the training (and validation) dataset"
 num_negative_passages_per_question: 2
+
+wandb_project: "ODQA"
+wandb_entity: "happy06"
