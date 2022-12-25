@@ -18,7 +18,9 @@ embedding_path: "path to save corpus features in .npy format."
 
 model_name_or_path: "klue/bert-base"
 train_data_path: "path to import the training (and validation) dataset"
+corpus_path: "path to import the corpus"
 num_negative_passages_per_question: 2
+top_k: 3
 
 wandb_project: "ODQA"
 wandb_entity: "happy06"
