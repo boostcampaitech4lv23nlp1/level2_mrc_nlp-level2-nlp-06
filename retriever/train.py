@@ -46,7 +46,7 @@ class RetrieverTrainer:
 
 
     def train(self):
-        train_dataloader = DataLoader(self.train_datasets, batch_size=self.config["batch_size"])
+        train_dataloader = DataLoader(self.train_datasets, batch_size=self.config["batch_size"], shuffle=True)
         valid_dataloader = DataLoader(self.valid_datasets, batch_size=self.config["batch_size"])
 
         # Optimizer
@@ -89,7 +89,6 @@ class RetrieverTrainer:
                 self.p_encoder.train()
                 self.q_encoder.train()
                 _, _, sim_scores = self.forward_step(batch)
-                # In-batch negative 적용 시 바꿔야 하는 부분.
                 targets = torch.arange(0, batch[0].shape[0]).long()
                 targets = targets.to(self.args.device)
                 
@@ -133,9 +132,9 @@ class RetrieverTrainer:
         batch_size = batch[0].shape[0]
 
         p_inputs = {
-            "input_ids": batch[0].view(batch_size * (self.num_neg + 1), -1).to(self.args.device),
-            "attention_mask": batch[1].view(batch_size * (self.num_neg + 1), -1).to(self.args.device),
-            "token_type_ids": batch[2].view(batch_size * (self.num_neg + 1), -1).to(self.args.device)
+            "input_ids": batch[0].view(batch_size, -1).to(self.args.device),
+            "attention_mask": batch[1].view(batch_size, -1).to(self.args.device),
+            "token_type_ids": batch[2].view(batch_size, -1).to(self.args.device)
         }
 
         q_inputs = {
@@ -149,10 +148,7 @@ class RetrieverTrainer:
         p_outputs = self.p_encoder(**p_inputs)
         q_outputs = self.q_encoder(**q_inputs)
 
-        p_outputs = p_outputs.view(batch_size, self.num_neg + 1, -1)
-        q_outputs = q_outputs.view(batch_size, 1, -1)
-
-        sim_scores = torch.bmm(q_outputs, torch.transpose(p_outputs, 1, 2)).squeeze()
+        sim_scores = torch.matmul(q_outputs, p_outputs.T).squeeze()
         sim_scores = sim_scores.view(batch_size, -1)
 
         del q_inputs, p_inputs
