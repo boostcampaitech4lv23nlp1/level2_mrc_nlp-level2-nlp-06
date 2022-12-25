@@ -12,6 +12,7 @@ import numpy as np
 import argparse
 import yaml
 import wandb
+from tqdm import tqdm
 
 
 def set_seed(random_seed):
@@ -46,7 +47,7 @@ class RetrieverTrainer:
     def train(self):
         train_dataloader = DataLoader(self.train_datasets, batch_size=self.config["batch_size"], shuffle=True)
         valid_dataloader = DataLoader(self.valid_datasets, batch_size=self.config["batch_size"])
-
+        
         # Optimizer
         no_decay = ["bias", "LayerNorm.weight"]
         optimizer_grouped_parameters = [
@@ -83,7 +84,7 @@ class RetrieverTrainer:
             config=config
         )
         for epoch in range(config["epochs"]):
-            for batch in train_dataloader:
+            for batch in tqdm(train_dataloader):
                 self.p_encoder.train()
                 self.q_encoder.train()
                 _, _, sim_scores = self.forward_step(batch)
@@ -91,10 +92,10 @@ class RetrieverTrainer:
                 targets = targets.to(self.args.device)
                 
                 sim_scores = F.log_softmax(sim_scores, dim=-1)
-                accuracy = Accuracy(task="multiclass", num_classes=batch[0].shape[0], top_k=1).to(config["device"])
-                acc = accuracy(sim_scores, targets)
+                # accuracy = Accuracy(task="multiclass", num_classes=batch[0].shape[0], top_k=1).to(config["device"])
+                # acc = accuracy(sim_scores, targets)
                 loss = F.nll_loss(sim_scores, targets)
-                wandb.log({"train_accuracy": acc, "train_loss": loss, "epoch": epoch})
+                wandb.log({"train_loss": loss, "epoch": epoch})
                 
                 loss.backward()
                 self.optimizer.step()
@@ -108,7 +109,7 @@ class RetrieverTrainer:
                 torch.cuda.empty_cache()
                     
 
-            for batch in valid_dataloader:
+            for batch in tqdm(valid_dataloader):
                 self.p_encoder.eval()
                 self.q_encoder.eval()
                 with torch.no_grad():
@@ -118,10 +119,10 @@ class RetrieverTrainer:
                 
                 sim_scores = F.log_softmax(sim_scores, dim=-1)
 
-                accuracy = Accuracy(task="multiclass", num_classes=batch[0].shape[0], top_k=1).to(config["device"])
-                acc = accuracy(sim_scores, targets)
+                # accuracy = Accuracy(task="multiclass", num_classes=batch[0].shape[0], top_k=1).to(config["device"])
+                # acc = accuracy(sim_scores, targets)
                 loss = F.nll_loss(sim_scores, targets)
-                wandb.log({"valid_accuracy": acc, "valid_loss": loss, "epoch": epoch})
+                wandb.log({"valid_loss": loss, "epoch": epoch})
                 
                 torch.cuda.empty_cache()
 

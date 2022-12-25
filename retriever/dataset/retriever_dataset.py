@@ -65,7 +65,7 @@ class RetrieverDataset(Dataset):
             pass
 
     def __len__(self):
-        return len(self.tokenized_passages)
+        return len(self.tokenized_passages['input_ids'])
 
     def construct_in_batch_negative_sampled_dataset(self):
         column_names = self.dataset.column_names
