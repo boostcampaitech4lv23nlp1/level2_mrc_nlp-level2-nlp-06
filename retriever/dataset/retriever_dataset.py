@@ -32,9 +32,7 @@ class RetrieverDataset(Dataset):
         self.mode = mode
 
         self.tokenizer = AutoTokenizer.from_pretrained(config["model_name_or_path"])
-        print(
-            f"RetrieverDataset > __init__: Number of negative passages per question is set: {config['num_negative_passages_per_question']}"
-        )
+
         self.max_length = 512
         self.stride = 128
         self.PE = Preprocess_features(self.tokenizer, self.max_length, self.stride)

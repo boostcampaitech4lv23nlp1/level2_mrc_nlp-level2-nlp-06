@@ -42,8 +42,6 @@ class RetrieverTrainer:
         self.p_encoder = DenseRetriever(self.config).to(config["device"])
         self.q_encoder = DenseRetriever(self.config).to(config["device"])
 
-        self.num_neg = self.config["num_negative_passages_per_question"]
-
 
     def train(self):
         train_dataloader = DataLoader(self.train_datasets, batch_size=self.config["batch_size"], shuffle=True)
