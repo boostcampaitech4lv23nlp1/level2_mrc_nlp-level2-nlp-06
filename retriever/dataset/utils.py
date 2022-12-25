@@ -59,11 +59,9 @@ class Preprocess_features:
                     token_start_index += 1
                 while offsets[token_end_index][1] >= answer_end_offset:
                     token_end_index -= 1
-                
-                tokenized_contexts["start_positions"].append(token_start_index)
-                tokenized_contexts["end_positions"].append(token_end_index)
+                tokenized_contexts["start_positions"].append(token_start_index - 1)
+                tokenized_contexts["end_positions"].append(token_end_index + 1)
                 tokenized_contexts["questions"].append(train_dataset["question"][example_index])
                 tokenized_contexts["answers"].append(train_dataset["answers"][example_index])
-                
+
         return tokenized_contexts
-        
