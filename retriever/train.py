@@ -2,16 +2,19 @@ from dataset import RetrieverDataset
 from model import DenseRetriever
 
 import torch
+import pandas as pd
 from torch.utils.data import DataLoader
 from torch.optim import AdamW
 import torch.nn.functional as F
 from torchmetrics import Accuracy
-from transformers import TrainingArguments, get_linear_schedule_with_warmup
+from transformers import TrainingArguments, get_linear_schedule_with_warmup, AutoTokenizer
 import random
 import numpy as np
 import argparse
 import yaml
 import wandb
+from tqdm import tqdm
+from datasets import load_from_disk
 
 
 def set_seed(random_seed):
@@ -33,7 +36,8 @@ class RetrieverTrainer:
             per_device_train_batch_size=self.config["batch_size"],
             per_device_eval_batch_size=self.config["batch_size"],
             num_train_epochs=self.config["epochs"],
-            weight_decay=self.config["weight_decay"]
+            weight_decay=self.config["weight_decay"],
+            report_to=["wandb"]
         )
 
         self.train_datasets = RetrieverDataset(self.config)
@@ -164,6 +168,15 @@ class RetrieverTrainer:
 
 def main(config):
     set_seed(config["random_seed"])
+
+    wandb.init(
+            project=config["wandb_project"], 
+            name=config["wandb_name"], 
+            notes=config["wandb_note"], 
+            entity=config["wandb_entity"], 
+            group=config["wandb_group"],
+            config=config
+        )
 
     trainer = RetrieverTrainer(config)
     trainer.train()
