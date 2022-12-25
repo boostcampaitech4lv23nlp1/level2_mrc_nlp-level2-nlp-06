@@ -50,7 +50,7 @@ class RetrieverTrainer:
 
         tokenizer = AutoTokenizer.from_pretrained(config["model_name_or_path"])
         self.tokenized_corpus = {"input_ids": [], "attention_mask": [], "token_type_ids": []}
-        for context in tqdm(pd.read_csv(config["corpus_path"])["text"][:100]):
+        for context in tqdm(pd.read_csv(config["corpus_path"])["text"]):
             tokenized_context = tokenizer(
                 context,
                 truncation=True,
