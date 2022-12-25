@@ -92,7 +92,7 @@ class RetrieverTrainer:
                 self.q_encoder.train()
                 _, _, sim_scores = self.forward_step(batch)
                 # In-batch negative 적용 시 바꿔야 하는 부분.
-                targets = torch.zeros(batch[0].shape[0]).long()
+                targets = torch.arange(0, batch[0].shape[0]).long()
                 targets = targets.to(self.args.device)
                 
                 sim_scores = F.log_softmax(sim_scores, dim=-1)
@@ -118,6 +118,9 @@ class RetrieverTrainer:
                 self.q_encoder.eval()
                 with torch.no_grad():
                     _, _, sim_scores = self.forward_step(batch)
+                targets = torch.arange(0, batch[0].shape[0]).long()
+                targets = targets.to(self.args.device)
+                
                 sim_scores = F.log_softmax(sim_scores, dim=-1)
 
                 acc = accuracy(sim_scores, targets)
