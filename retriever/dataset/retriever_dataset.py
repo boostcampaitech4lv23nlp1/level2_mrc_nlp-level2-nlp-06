@@ -76,7 +76,7 @@ class RetrieverDataset(Dataset):
             batched=True,
             num_proc=4,
             remove_columns=column_names,
-            load_from_cache_file=False,
+            load_from_cache_file=True,
         )
         questions = tokenized_passages["questions"]
         
