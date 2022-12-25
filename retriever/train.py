@@ -68,8 +68,6 @@ class RetrieverTrainer:
             num_warmup_steps=int(self.config["warmup_ratio"]*t_total),
             num_training_steps=t_total
         )
-        
-        accuracy = Accuracy(task="multiclass", num_classes=self.num_neg+1, top_k=1).to(config["device"])
 
         # Start training!
         global_step = 0
@@ -96,7 +94,7 @@ class RetrieverTrainer:
                 targets = targets.to(self.args.device)
                 
                 sim_scores = F.log_softmax(sim_scores, dim=-1)
-
+                accuracy = Accuracy(task="multiclass", num_classes=batch[0].shape[0], top_k=1).to(config["device"])
                 acc = accuracy(sim_scores, targets)
                 loss = F.nll_loss(sim_scores, targets)
                 wandb.log({"train_accuracy": acc, "train_loss": loss, "epoch": epoch})
@@ -123,6 +121,7 @@ class RetrieverTrainer:
                 
                 sim_scores = F.log_softmax(sim_scores, dim=-1)
 
+                accuracy = Accuracy(task="multiclass", num_classes=batch[0].shape[0], top_k=1).to(config["device"])
                 acc = accuracy(sim_scores, targets)
                 loss = F.nll_loss(sim_scores, targets)
                 wandb.log({"valid_accuracy": acc, "valid_loss": loss, "epoch": epoch})
