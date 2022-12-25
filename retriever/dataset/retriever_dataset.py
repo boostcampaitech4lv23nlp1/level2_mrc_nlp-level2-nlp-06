@@ -69,25 +69,6 @@ class RetrieverDataset(Dataset):
     def __len__(self):
         return len(self.tokenized_passages)
 
-    # def construct_negative_sampled_batch(self):
-    #     corpus = np.array(list(set([example for example in self.dataset["context"]])))
-    #     passage_batch = []
-
-    #     for passage in self.dataset["context"]:
-    #         while True:
-    #             negative_passage_indices = np.random.randint(
-    #                 len(corpus), size=self.config["num_negative_passages_per_question"]
-    #             )
-
-    #             if not passage in corpus[negative_passage_indices]:
-    #                 negative_passage = corpus[negative_passage_indices]
-
-    #                 passage_batch.append(passage)
-    #                 passage_batch.extend(negative_passage)
-    #                 break
-
-    #     return passage_batch
-
     def construct_in_batch_negative_sampled_dataset(self):
         column_names = self.dataset.column_names
         tokenized_passages = self.dataset.map(
