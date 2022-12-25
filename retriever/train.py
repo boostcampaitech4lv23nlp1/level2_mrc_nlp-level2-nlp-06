@@ -60,9 +60,9 @@ class RetrieverTrainer:
                 padding="max_length",
                 return_tensors="pt"
             )
-            self.tokenized_corpus["input_ids"].extend([c for c in tokenized_context["input_ids"]])
-            self.tokenized_corpus["attention_mask"].extend([c for c in tokenized_context["attention_mask"]])
-            self.tokenized_corpus["token_type_ids"].extend([c for c in tokenized_context["token_type_ids"]])
+            self.tokenized_corpus["input_ids"].extend([c.unsqueeze(0) for c in tokenized_context["input_ids"]])
+            self.tokenized_corpus["attention_mask"].extend([c.unsqueeze(0) for c in tokenized_context["attention_mask"]])
+            self.tokenized_corpus["token_type_ids"].extend([c.unsqueeze(0) for c in tokenized_context["token_type_ids"]])
 
 
     def train(self):
@@ -97,6 +97,8 @@ class RetrieverTrainer:
         torch.cuda.empty_cache()
 
         for epoch in tqdm(range(self.config["epochs"])):
+            train_loss = 0
+            valid_loss = 0
             for batch in tqdm(train_dataloader):
                 self.p_encoder.train()
                 self.q_encoder.train()
@@ -109,6 +111,7 @@ class RetrieverTrainer:
                 # accuracy = Accuracy(task="multiclass", num_classes=batch[0].shape[0], top_k=1).to(config["device"])
                 # acc = accuracy(sim_scores, targets)
                 loss = F.nll_loss(sim_scores, targets)
+                train_loss += loss
                 wandb.log({"train_loss": loss, "epoch": epoch})
 
                 loss.backward()
@@ -121,6 +124,7 @@ class RetrieverTrainer:
                 global_step += 1
 
                 torch.cuda.empty_cache()
+            wandb.log({"train_loss_per_epoch": train_loss / len(train_dataloader)})
 
             for batch in tqdm(valid_dataloader):
                 self.p_encoder.eval()
@@ -131,21 +135,22 @@ class RetrieverTrainer:
                 targets = targets.to(self.args.device)
                 
                 sim_scores = F.log_softmax(sim_scores, dim=-1)
-                targets = torch.zeros(batch[0].shape[0]).long()
-                targets = targets.to(self.args.device)
 
                 # accuracy = Accuracy(task="multiclass", num_classes=batch[0].shape[0], top_k=1).to(config["device"])
                 # acc = accuracy(sim_scores, targets)
                 loss = F.nll_loss(sim_scores, targets)
+                valid_loss += loss
 
                 wandb.log({"valid_loss": loss, "epoch": epoch})
                 
                 torch.cuda.empty_cache()
+            wandb.log({"valid_loss_per_epoch": valid_loss / len(train_dataloader)})
+
             print("\n*** CHECKING THE TRAIN & VALIDATION ACCURACY ***\n")
             train_accuracy, valid_accuracy = self.count_match()
             print("*** TRAIN ACCURACY:", valid_accuracy)
             print("*** VALIDATION ACCURACY:", valid_accuracy)
-            wandb.log({"train_accuracy": train_accuracy, "valid_accuracy": valid_accuracy, "full_valid_loss": loss, "full_epoch": epoch})
+            wandb.log({"train_accuracy": train_accuracy, "valid_accuracy": valid_accuracy})
 
 
     def forward_step(self, batch):
@@ -205,8 +210,8 @@ class RetrieverTrainer:
             question_embeddings = []
             with torch.no_grad():
                 p_outputs, q_outputs, _ = self.forward_step(batch)
-            gold_passage_embeddings = p_outputs[:, 0]
-            question_embeddings = q_outputs.squeeze()
+            gold_passage_embeddings = p_outputs
+            question_embeddings = q_outputs
             del p_outputs
             del q_outputs
 
@@ -225,8 +230,8 @@ class RetrieverTrainer:
             question_embeddings = []
             with torch.no_grad():
                 p_outputs, q_outputs, _ = self.forward_step(batch)
-            gold_passage_embeddings = p_outputs[:, 0]
-            question_embeddings = q_outputs.squeeze()
+            gold_passage_embeddings = p_outputs
+            question_embeddings = q_outputs
             del p_outputs
             del q_outputs
 
