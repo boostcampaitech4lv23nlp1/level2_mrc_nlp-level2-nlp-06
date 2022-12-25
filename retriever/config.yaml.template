@@ -21,6 +21,7 @@ train_data_path: "path to import the training (and validation) dataset"
 corpus_path: "path to import the corpus"
 num_negative_passages_per_question: 2
 top_k: 3
+stride: 128
 
 wandb_project: "ODQA"
 wandb_entity: "happy06"
