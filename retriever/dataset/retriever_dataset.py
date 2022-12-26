@@ -119,7 +119,7 @@ class WikiDataset(Dataset):
     """
     def __init__(self, config, tokenizer):
         super(WikiDataset, self).__init__()
-        self.corpus = pd.read_csv(config["corpus_path"])["text"][:100]
+        self.corpus = pd.read_csv(config["corpus_path"])["text"]
         self.preprocess_corpus()
 
         self.contexts = tokenizer(
