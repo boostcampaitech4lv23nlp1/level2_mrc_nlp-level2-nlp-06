@@ -87,8 +87,9 @@ def main(config):
 
     ### Save the pairs of question and top-k subdocuments ###
     result = {
-        "questions": [],
+        "question": [],
         "subdocument": [],
+        "question_id": [],
         "document_id": [],
         "subdocument_id": [],
     }
@@ -102,7 +103,8 @@ def main(config):
                 token_end_index -= 1
             token_start_index = wiki_dataset.contexts["offset_mapping"][topk_index][token_start_index][0]
             token_end_index = wiki_dataset.contexts["offset_mapping"][topk_index][token_end_index][1]
-            result["questions"].append(test_dataset.dataset[question_index]["question"])
+            result["question"].append(test_dataset.dataset[question_index]["question"])
+            result["question_id"].append(question_index)
             result["document_id"].append(
                 wiki_dataset.contexts["overflow_to_sample_mapping"][topk_index].item()
             )
