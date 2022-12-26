@@ -128,6 +128,5 @@ if __name__ == "__main__":
     
     with open(args.conf, "r") as f:
         config = yaml.load(f, Loader=yaml.Loader)
-    config["corpus_feature_path"] = "features/wiki_trun_32.pickle"
     
     main(config)
