@@ -1,2 +1,4 @@
 *.ipynb
 *.yaml
+*__pycache__*
+wandb
