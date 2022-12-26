@@ -33,7 +33,7 @@ class RetrieverDataset(Dataset):
 
         self.tokenizer = AutoTokenizer.from_pretrained(config["model_name_or_path"])
 
-        self.max_length = 512
+        self.max_length = 384
         self.stride = self.config["stride"]
         print(f"RetrieverDataset > __init__: The stride is set: {self.stride}")
         self.PE = Preprocess_features(self.tokenizer, self.max_length, self.stride)
