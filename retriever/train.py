@@ -148,7 +148,7 @@ class RetrieverTrainer:
 
             print("\n*** CHECKING THE TRAIN & VALIDATION ACCURACY ***\n")
             train_accuracy, valid_accuracy = self.count_match()
-            print("*** TRAIN ACCURACY:", valid_accuracy)
+            print("*** TRAIN ACCURACY:", train_accuracy)
             print("*** VALIDATION ACCURACY:", valid_accuracy)
             wandb.log({"train_accuracy": train_accuracy, "valid_accuracy": valid_accuracy})
 
