@@ -1,9 +1,11 @@
-import numpy as np
 import torch
-from transformers import AutoTokenizer
+import numpy as np
+import pandas as pd
+from typing import List
 from datasets import load_from_disk
 from torch.utils.data import Dataset
 from .utils import Preprocess_features
+from transformers import AutoTokenizer
 
 
 class RetrieverDataset(Dataset):
@@ -98,4 +100,43 @@ class RetrieverDataset(Dataset):
         tokenized_passages = {k: torch.tensor(v) for k, v in Passages.items()}
         
         return tokenized_passages, tokenized_questions
-        
+
+
+class WikiDataset(Dataset):
+    """Dataset for wikipedia documents
+
+    Attributes:
+        self.contexts (): Encoded wikipedia documents
+    """
+    def __init__(self, config, tokenizer):
+        super(WikiDataset, self).__init__()
+        self.corpus = pd.read_csv(config["corpus_path"])["text"][:100]
+        self.preprocess_corpus()
+
+        self.contexts = tokenizer(
+            self.corpus,
+            max_length=config["max_length"],
+            padding="max_length",
+            truncation=True,
+            stride=config["stride"],
+            return_offsets_mapping=True,
+            return_overflowing_tokens=True,
+            return_tensors="pt"
+        ) # (number of subdocuments, max length)
+
+    def __len__(self):
+        return len(self.contexts["input_ids"])
+
+    def __getitem__(self, idx):
+        return {
+            "input_ids": self.contexts['input_ids'][idx],
+            "attention_mask": self.contexts["attention_mask"][idx],
+            "token_type_ids": self.contexts["token_type_ids"][idx]
+        }
+
+    def preprocess_corpus(self):
+        """Preprocess the contexts in the Wikipedia corpus
+
+        You can customize the following preprocessing approach.
+        """
+        self.corpus = [context.replace("\\n", "") for context in self.corpus]
