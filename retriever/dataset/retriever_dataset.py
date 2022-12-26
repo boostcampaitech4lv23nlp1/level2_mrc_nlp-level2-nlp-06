@@ -39,20 +39,25 @@ class RetrieverDataset(Dataset):
         self.stride = self.config["stride"]
         print(f"RetrieverDataset > __init__: The stride is set: {self.stride}")
         self.PE = Preprocess_features(self.tokenizer, self.max_length, self.stride)
-        
+
         if mode == "train":
             print(
                 "RetrieverDataset > __init__: You are currently in the TRAINING process. It will construct in-batch negative samples."
             )
             self.dataset = load_from_disk(config["train_data_path"])["train"]
+            self.tokenized_passages, self.tokenized_questions = self.construct_in_batch_negative_sampled_dataset()
         elif mode == "validation":
             print(
                 "RetrieverDataset > __init__: You are currently in the VALIDATION process. It will construct in-batch negative samples."
             )
             self.dataset = load_from_disk(config["train_data_path"])["validation"]
+            self.tokenized_passages, self.tokenized_questions = self.construct_in_batch_negative_sampled_dataset()
         elif mode == "test":
-            pass
-        self.tokenized_passages, self.tokenized_questions = self.construct_in_batch_negative_sampled_dataset()
+            print(
+                "RetrieverDataset > __init__: You are currently in the TEST process. It will NOT construct in-batch negative samples."
+            )
+            self.dataset = load_from_disk(config["test_data_path"])["validation"]
+            self.tokenized_questions = self.tokenizer(self.dataset["question"], padding=True, return_tensors="pt")
 
     def __getitem__(self, index):
         if self.mode in ["train", "validation"]:
@@ -65,10 +70,14 @@ class RetrieverDataset(Dataset):
                 self.tokenized_questions["token_type_ids"][index],
             )
         else:
-            pass
+            return (
+                self.tokenized_questions["input_ids"][index],
+                self.tokenized_questions["attention_mask"][index],
+                self.tokenized_questions["token_type_ids"][index],
+            )
 
     def __len__(self):
-        return len(self.tokenized_passages['input_ids'])
+        return len(self.dataset)
 
     def construct_in_batch_negative_sampled_dataset(self):
         column_names = self.dataset.column_names
