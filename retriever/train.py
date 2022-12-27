@@ -47,22 +47,18 @@ class RetrieverTrainer:
         self.q_encoder = DenseRetriever(self.config).to(config["device"])
 
         self.num_neg = self.config["num_negative_passages_per_question"]
-
-        tokenizer = AutoTokenizer.from_pretrained(config["model_name_or_path"])
-        self.tokenized_corpus = {"input_ids": [], "attention_mask": [], "token_type_ids": []}
-        for context in tqdm(pd.read_csv(config["corpus_path"])["text"]):
-            tokenized_context = tokenizer(
-                context,
-                truncation=True,
-                stride=config["stride"],
-                return_overflowing_tokens=True,
-                return_offsets_mapping=True,
-                padding="max_length",
-                return_tensors="pt"
-            )
-            self.tokenized_corpus["input_ids"].extend([c.unsqueeze(0) for c in tokenized_context["input_ids"]])
-            self.tokenized_corpus["attention_mask"].extend([c.unsqueeze(0) for c in tokenized_context["attention_mask"]])
-            self.tokenized_corpus["token_type_ids"].extend([c.unsqueeze(0) for c in tokenized_context["token_type_ids"]])
+        
+        wiki_contexts = pd.read_csv(config["corpus_path"])["text"]
+        self.wiki_contexts = [context.replace("\\n", "") for context in wiki_contexts]
+        self.tokenized_corpus = self.train_datasets.tokenizer(
+            self.wiki_contexts,
+            truncation=True,
+            stride=config["stride"],
+            return_overflowing_tokens=True,
+            return_offsets_mapping=True,
+            padding="max_length",
+            return_tensors="pt"
+        )
 
 
     def train(self):
