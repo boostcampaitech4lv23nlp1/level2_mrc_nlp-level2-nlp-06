@@ -186,65 +186,59 @@ class RetrieverTrainer:
         self.q_encoder.eval()
 
         context_embeddings = []
-
-        for context_index in tqdm(range(len(self.tokenized_corpus["input_ids"]))):
+        for data in self.wikiloader:
+            data = {k: v.to('cuda') for k, v in data.items()}
             with torch.no_grad():
-                tokenized_context = {
-                    "input_ids": self.tokenized_corpus["input_ids"][context_index].to(self.args.device),
-                    "attention_mask": self.tokenized_corpus["attention_mask"][context_index].to(self.args.device),
-                    "token_type_ids": self.tokenized_corpus["token_type_ids"][context_index].to(self.args.device)
-                }
-                context_embedding = self.p_encoder(**tokenized_context).detach().cpu()
-                del tokenized_context
-                context_embeddings.append(context_embedding)
-                del context_embedding
-        context_embeddings = torch.stack(context_embeddings)
-        context_embeddings = context_embeddings.squeeze() # (number of contexts, max length)
-        context_embeddings = context_embeddings.to(self.args.device)
+                p_output = self.p_encoder(**data)
+            context_embeddings.append(p_output.cpu())
+        context_embeddings = torch.cat(context_embeddings, dim=0)
 
         train_dataloader = DataLoader(self.train_datasets, batch_size=self.config["batch_size"])
         valid_dataloader = DataLoader(self.valid_datasets, batch_size=self.config["batch_size"])
 
-        train_accuracy = 0
-        for batch in tqdm(train_dataloader):
-            question_embeddings = []
+        question_embeddings = []
+        label_embeddings = []
+        for data in train_dataloader:
             with torch.no_grad():
-                p_outputs, q_outputs, _ = self.forward_step(batch)
-            gold_passage_embeddings = p_outputs
-            question_embeddings = q_outputs
-            del p_outputs
-            del q_outputs
-
-            # Matrix multiplication between (batch size, max length) and (max length, number of contexts) -> (batch size, number of contexts)
-            sim_scores = torch.mm(question_embeddings, torch.transpose(context_embeddings, 0, 1))
-            del question_embeddings
-            for i, pair in enumerate(sim_scores):
-                top_k_context_embeddings = context_embeddings[torch.argsort(pair, dim=-1, descending=True)[:self.config["top_k"]]]
-                if gold_passage_embeddings[i] in top_k_context_embeddings:
-                    train_accuracy += 1
-            torch.cuda.empty_cache()
-        train_accuracy /= (len(train_dataloader) * self.config["batch_size"])
-
-        valid_accuracy = 0
-        for batch in tqdm(valid_dataloader):
-            question_embeddings = []
+                p_outputs, q_outputs, _ = self.forward_step(data)
+                question_embeddings.append(q_outputs)
+                label_embeddings.append(p_outputs)
+        question_embeddings = torch.cat(question_embeddings, dim=0)
+        label_embeddings = torch.cat(label_embeddings, dim=0)
+        scores = torch.matmul(question_embeddings, context_embeddings.T)
+        
+        topk_indexes = []
+        topk_scores = []
+        for score in scores:
+            topk_res = torch.topk(score, 100)
+            topk_indexes.append(topk_res.indices)
+            topk_scores.append(topk_res.value)
+        train_top5 = self.calc_wiki_accuracy(p_outputs, label_embeddings, topk_indexes, 5)
+        train_top20 = self.calc_wiki_accuracy(p_outputs, label_embeddings, topk_indexes, 20)
+        train_top100 = self.calc_wiki_accuracy(p_outputs, label_embeddings, topk_indexes, 100)
+        
+        question_embeddings = []
+        label_embeddings = []
+        for data in valid_dataloader:
             with torch.no_grad():
-                p_outputs, q_outputs, _ = self.forward_step(batch)
-            gold_passage_embeddings = p_outputs
-            question_embeddings = q_outputs
-            del p_outputs
-            del q_outputs
-
-            # Matrix multiplication between (batch size, max length) and (max length, number of contexts) -> (batch size, number of contexts)
-            sim_scores = torch.mm(question_embeddings, torch.transpose(context_embeddings, 0, 1))
-            del question_embeddings
-            for i, pair in enumerate(sim_scores):
-                top_k_context_embeddings = context_embeddings[torch.argsort(pair, dim=-1, descending=True)[:self.config["top_k"]]]
-                if gold_passage_embeddings[i] in top_k_context_embeddings:
-                    valid_accuracy += 1
-            torch.cuda.empty_cache()
-        valid_accuracy /= (len(valid_dataloader) * self.config["batch_size"])
-        return train_accuracy, valid_accuracy
+                p_outputs, q_outputs, _ = self.forward_step(data)
+                question_embeddings.append(q_outputs)
+                label_embeddings.append(p_outputs)
+        question_embeddings = torch.cat(question_embeddings, dim=0)
+        label_embeddings = torch.cat(label_embeddings, dim=0)
+        scores = torch.matmul(question_embeddings, context_embeddings.T)
+        
+        topk_indexes = []
+        topk_scores = []
+        for score in scores:
+            topk_res = torch.topk(score, 100)
+            topk_indexes.append(topk_res.indices)
+            topk_scores.append(topk_res.value)
+        valid_top5 = self.calc_wiki_accuracy(p_outputs, label_embeddings, topk_indexes, 5)
+        valid_top20 = self.calc_wiki_accuracy(p_outputs, label_embeddings, topk_indexes, 20)
+        valid_top100 = self.calc_wiki_accuracy(p_outputs, label_embeddings, topk_indexes, 100)
+        
+        return train_top5, train_top20, train_top100, valid_top5, valid_top20, valid_top100
 
 
     def save_models(self):
