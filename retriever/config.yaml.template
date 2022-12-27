@@ -48,4 +48,5 @@ test_data_path: "path to import the test dataset"
 # Features
 corpus_feature_path: "path to save encoded corpus"
 embedding_path: "path to save corpus features in .npy format."
-inference_result_path: "path to save the inference result"
+validation_result_path: "path to save the validation result in .csv format"
+inference_result_path: "path to save the inference result in .csv format"
