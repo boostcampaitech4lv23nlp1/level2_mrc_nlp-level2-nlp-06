@@ -6,15 +6,13 @@ import pandas as pd
 from torch.utils.data import DataLoader
 from torch.optim import AdamW
 import torch.nn.functional as F
-from torchmetrics import Accuracy
-from transformers import TrainingArguments, get_linear_schedule_with_warmup, AutoTokenizer
+from transformers import TrainingArguments, get_linear_schedule_with_warmup
 import random
 import numpy as np
 import argparse
 import yaml
 import wandb
 from tqdm import tqdm
-from datasets import load_from_disk
 
 
 def set_seed(random_seed):
