@@ -185,6 +185,30 @@ class RetrieverTrainer:
                     correct += 1
                 
         return correct/len(indexes)
+    
+    def get_topk_result(self, dataloader, context_embeddings):
+        question_embeddings = []
+        label_embeddings = []
+        for data in dataloader:
+            with torch.no_grad():
+                p_outputs, q_outputs, _ = self.forward_step(data)
+                question_embeddings.append(q_outputs)
+                label_embeddings.append(p_outputs)
+        question_embeddings = torch.cat(question_embeddings, dim=0)
+        label_embeddings = torch.cat(label_embeddings, dim=0)
+        scores = torch.matmul(question_embeddings, context_embeddings.T)
+        
+        topk_indexes = []
+        topk_scores = []
+        for score in scores:
+            topk_res = torch.topk(score, 100)
+            topk_indexes.append(topk_res.indices)
+            topk_scores.append(topk_res.value)
+        top5 = self.calc_wiki_accuracy(p_outputs, label_embeddings, topk_indexes, 5)
+        top20 = self.calc_wiki_accuracy(p_outputs, label_embeddings, topk_indexes, 20)
+        top100 = self.calc_wiki_accuracy(p_outputs, label_embeddings, topk_indexes, 100)
+        
+        return top5, top20, top100
 
     def count_match(self):
         self.p_encoder.eval()
@@ -201,47 +225,8 @@ class RetrieverTrainer:
         train_dataloader = DataLoader(self.train_datasets, batch_size=self.config["batch_size"])
         valid_dataloader = DataLoader(self.valid_datasets, batch_size=self.config["batch_size"])
 
-        question_embeddings = []
-        label_embeddings = []
-        for data in train_dataloader:
-            with torch.no_grad():
-                p_outputs, q_outputs, _ = self.forward_step(data)
-                question_embeddings.append(q_outputs)
-                label_embeddings.append(p_outputs)
-        question_embeddings = torch.cat(question_embeddings, dim=0)
-        label_embeddings = torch.cat(label_embeddings, dim=0)
-        scores = torch.matmul(question_embeddings, context_embeddings.T)
-        
-        topk_indexes = []
-        topk_scores = []
-        for score in scores:
-            topk_res = torch.topk(score, 100)
-            topk_indexes.append(topk_res.indices)
-            topk_scores.append(topk_res.value)
-        train_top5 = self.calc_wiki_accuracy(p_outputs, label_embeddings, topk_indexes, 5)
-        train_top20 = self.calc_wiki_accuracy(p_outputs, label_embeddings, topk_indexes, 20)
-        train_top100 = self.calc_wiki_accuracy(p_outputs, label_embeddings, topk_indexes, 100)
-        
-        question_embeddings = []
-        label_embeddings = []
-        for data in valid_dataloader:
-            with torch.no_grad():
-                p_outputs, q_outputs, _ = self.forward_step(data)
-                question_embeddings.append(q_outputs)
-                label_embeddings.append(p_outputs)
-        question_embeddings = torch.cat(question_embeddings, dim=0)
-        label_embeddings = torch.cat(label_embeddings, dim=0)
-        scores = torch.matmul(question_embeddings, context_embeddings.T)
-        
-        topk_indexes = []
-        topk_scores = []
-        for score in scores:
-            topk_res = torch.topk(score, 100)
-            topk_indexes.append(topk_res.indices)
-            topk_scores.append(topk_res.value)
-        valid_top5 = self.calc_wiki_accuracy(p_outputs, label_embeddings, topk_indexes, 5)
-        valid_top20 = self.calc_wiki_accuracy(p_outputs, label_embeddings, topk_indexes, 20)
-        valid_top100 = self.calc_wiki_accuracy(p_outputs, label_embeddings, topk_indexes, 100)
+        train_top5, train_top20, train_top100 = self.get_topk_result(train_dataloader, context_embeddings)
+        valid_top5, valid_top20, valid_top100 = self.get_topk_result(valid_dataloader, context_embeddings)
         
         return train_top5, train_top20, train_top100, valid_top5, valid_top20, valid_top100
 
