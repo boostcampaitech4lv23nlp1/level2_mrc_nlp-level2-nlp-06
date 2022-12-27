@@ -130,8 +130,6 @@ class RetrieverTrainer:
 
                 loss = F.nll_loss(sim_scores, targets)
                 valid_loss += loss
-
-                wandb.log({"valid_loss": loss, "epoch": epoch})
                 
                 torch.cuda.empty_cache()
             wandb.log({"valid_loss_per_epoch": valid_loss / len(train_dataloader)})
