@@ -171,6 +171,15 @@ class RetrieverTrainer:
 
         return p_outputs, q_outputs, sim_scores
 
+    def calc_wiki_accuracy(self, pred_context, label_context, indexes, k):
+        correct = 0
+        for i, index in enumerate(indexes):
+            label = label_context[i]
+            for idx in index[:k]: # top-k
+                if pred_context[idx].tolist() == label.tolist():
+                    correct += 1
+                
+        return correct/len(indexes)
 
     def count_match(self):
         self.p_encoder.eval()
