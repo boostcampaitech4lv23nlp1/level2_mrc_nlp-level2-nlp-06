@@ -170,6 +170,7 @@ class RetrieverTrainer:
             for idx in index[:k]: # top-k
                 if pred_context[idx].tolist() == label.tolist():
                     correct += 1
+                    break
                 
         return correct/len(indexes)
     
@@ -177,24 +178,21 @@ class RetrieverTrainer:
         question_embeddings = []
         label_embeddings = []
         for data in dataloader:
-            data = {k: v.to(config["device"]) for k, v in data.items()}
             with torch.no_grad():
                 p_outputs, q_outputs, _ = self.forward_step(data)
-                question_embeddings.append(q_outputs)
-                label_embeddings.append(p_outputs)
+                question_embeddings.append(q_outputs.cpu())
+                label_embeddings.append(p_outputs.cpu())
         question_embeddings = torch.cat(question_embeddings, dim=0)
         label_embeddings = torch.cat(label_embeddings, dim=0)
         scores = torch.matmul(question_embeddings, context_embeddings.T)
         
         topk_indexes = []
-        topk_scores = []
         for score in scores:
             topk_res = torch.topk(score, 100)
             topk_indexes.append(topk_res.indices)
-            topk_scores.append(topk_res.value)
-        top5 = self.calc_wiki_accuracy(p_outputs, label_embeddings, topk_indexes, 5)
-        top20 = self.calc_wiki_accuracy(p_outputs, label_embeddings, topk_indexes, 20)
-        top100 = self.calc_wiki_accuracy(p_outputs, label_embeddings, topk_indexes, 100)
+        top5 = self.calc_wiki_accuracy(context_embeddings, label_embeddings, topk_indexes, 5)
+        top20 = self.calc_wiki_accuracy(context_embeddings, label_embeddings, topk_indexes, 20)
+        top100 = self.calc_wiki_accuracy(context_embeddings, label_embeddings, topk_indexes, 100)
         
         return top5, top20, top100
 
