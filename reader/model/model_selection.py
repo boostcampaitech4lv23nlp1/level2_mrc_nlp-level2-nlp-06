@@ -8,6 +8,7 @@ class ModelSelection():
         
         if config["train_type"] == 0:
             model_config = AutoConfig.from_pretrained(config["model_name"])
+            self.tokenizer = AutoTokenizer.from_pretrained(config["model_name"], use_fast=True)
             self.model = ExtractionModel(config, model_config)
         
         ## TODO: Generation Model
@@ -15,3 +16,4 @@ class ModelSelection():
             pass
         
     def get_model(self): return self.model
+    def get_tokenizer(self): return self.tokenizer
