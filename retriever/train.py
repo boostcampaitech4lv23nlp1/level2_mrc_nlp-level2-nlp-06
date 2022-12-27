@@ -138,10 +138,15 @@ class RetrieverTrainer:
             wandb.log({"valid_loss_per_epoch": valid_loss / len(train_dataloader)})
 
             print("\n*** CHECKING THE TRAIN & VALIDATION ACCURACY ***\n")
-            train_accuracy, valid_accuracy = self.count_match()
-            print("*** TRAIN ACCURACY:", train_accuracy)
-            print("*** VALIDATION ACCURACY:", valid_accuracy)
-            wandb.log({"train_accuracy": train_accuracy, "valid_accuracy": valid_accuracy})
+            train_top5, train_top20, train_top100, valid_top5, valid_top20, valid_top100 = self.count_match()
+            wandb.log({
+                "train_top5 accuracy :", train_top5,
+                "train_top20 accuracy :", train_top20,
+                "train_top100 accuracy :", train_top100,
+                "valid_top5 accuracy :", valid_top5,
+                "valid_top20 accuracy :", valid_top20,
+                "valid_top100 accuracy :", valid_top100,
+            })
 
 
     def forward_step(self, batch):
