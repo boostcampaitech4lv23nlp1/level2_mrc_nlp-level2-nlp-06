@@ -124,16 +124,16 @@ class RetrieverTrainer:
             valid_loss /= len(valid_dataloader)
             wandb.log({"valid_loss_per_epoch": valid_loss})
 
-            print("\n*** CHECKING THE TRAIN & VALIDATION ACCURACY ***\n")
-            train_top5, train_top20, train_top100, valid_top5, valid_top20, valid_top100 = self.count_match()
-            wandb.log({
-                "train_top5 accuracy" : train_top5,
-                "train_top20 accuracy" : train_top20,
-                "train_top100 accuracy" : train_top100,
-                "valid_top5 accuracy" : valid_top5,
-                "valid_top20 accuracy" : valid_top20,
-                "valid_top100 accuracy" : valid_top100,
-            })
+            # print("\n*** CHECKING THE TRAIN & VALIDATION ACCURACY ***\n")
+            # train_top5, train_top20, train_top100, valid_top5, valid_top20, valid_top100 = self.count_match()
+            # wandb.log({
+            #     "train_top5 accuracy" : train_top5,
+            #     "train_top20 accuracy" : train_top20,
+            #     "train_top100 accuracy" : train_top100,
+            #     "valid_top5 accuracy" : valid_top5,
+            #     "valid_top20 accuracy" : valid_top20,
+            #     "valid_top100 accuracy" : valid_top100,
+            # })
 
             print("\n*** SAVING THE CHECKPOINT ***\n")
             self.save_checkpoint(epoch, valid_loss)
@@ -225,7 +225,7 @@ class RetrieverTrainer:
     def save_checkpoint(self, epoch, valid_loss):
         ## TODO: save_path로 디렉토리를 받도록 수정하기. 이를 위해선 inference 코드들이 수정되어야 함. -> inference용 config 만들기.
         torch.save(self.p_encoder.state_dict(), f"{self.config['p_encoder_save_path'][:-3]}-{epoch}-{valid_loss:.6f}.pt")
-        torch.save(self.q_encoder.state_dict(), f"{self.config['p_encoder_save_path'][:-3]}-{epoch}-{valid_loss:.6f}.pt")
+        torch.save(self.q_encoder.state_dict(), f"{self.config['q_encoder_save_path'][:-3]}-{epoch}-{valid_loss:.6f}.pt")
 
 
 
