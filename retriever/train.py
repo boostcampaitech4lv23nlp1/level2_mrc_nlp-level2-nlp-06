@@ -127,12 +127,12 @@ class RetrieverTrainer:
             print("\n*** CHECKING THE TRAIN & VALIDATION ACCURACY ***\n")
             train_top5, train_top20, train_top100, valid_top5, valid_top20, valid_top100 = self.count_match()
             wandb.log({
-                "train_top5 accuracy :", train_top5,
-                "train_top20 accuracy :", train_top20,
-                "train_top100 accuracy :", train_top100,
-                "valid_top5 accuracy :", valid_top5,
-                "valid_top20 accuracy :", valid_top20,
-                "valid_top100 accuracy :", valid_top100,
+                "train_top5 accuracy" : train_top5,
+                "train_top20 accuracy" : train_top20,
+                "train_top100 accuracy" : train_top100,
+                "valid_top5 accuracy" : valid_top5,
+                "valid_top20 accuracy" : valid_top20,
+                "valid_top100 accuracy" : valid_top100,
             })
 
 
