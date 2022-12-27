@@ -177,6 +177,7 @@ class RetrieverTrainer:
         question_embeddings = []
         label_embeddings = []
         for data in dataloader:
+            data = {k: v.to(config["device"]) for k, v in data.items()}
             with torch.no_grad():
                 p_outputs, q_outputs, _ = self.forward_step(data)
                 question_embeddings.append(q_outputs)
