@@ -203,7 +203,7 @@ class RetrieverTrainer:
         context_embeddings = []
         print("make context feature...(it takes a while...)")
         for data in tqdm(self.wikiloader):
-            data = {k: v.to('cuda') for k, v in data.items()}
+            data = {k: v.to(config["device"]) for k, v in data.items()}
             with torch.no_grad():
                 p_output = self.p_encoder(**data)
             context_embeddings.append(p_output.cpu())
