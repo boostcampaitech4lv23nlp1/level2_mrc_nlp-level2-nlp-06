@@ -96,11 +96,41 @@ def main(config):
     print("top-20 result :", top20)
     print("top-100 result :", top100)
 
+    ### Save the pairs of question and top-k subdocuments ###
+    result = {
+        "question": [],
+        "answer_document":[],
+        "subdocument": [],
+        "question_id": [],
+        "document_id": [],
+        "subdocument_id": [],
+    }
+    for question_index in range(len(valid_dataset.dataset)):
+        for topk_index in topk_indices[question_index]:
+            token_start_index = 0
+            while wiki_dataset.contexts["offset_mapping"][topk_index][token_start_index].sum() == 0:
+                token_start_index += 1
+            token_end_index = config['max_length'] - 1
+            while wiki_dataset.contexts["offset_mapping"][topk_index][token_end_index].sum() == 0:
+                token_end_index -= 1
+            token_start_index = wiki_dataset.contexts["offset_mapping"][topk_index][token_start_index][0]
+            token_end_index = wiki_dataset.contexts["offset_mapping"][topk_index][token_end_index][1]
+            result["question"].append(valid_dataset.dataset[question_index]["question"])
+            result["question_id"].append(question_index)
+            result["answer_document"].append(valid_dataset.dataset[question_index]["context"])
+            result["document_id"].append(
+                wiki_dataset.contexts["overflow_to_sample_mapping"][topk_index].item()
+            )
+            result["subdocument"].append(wiki_dataset.corpus[result["document_id"][-1]][token_start_index:token_end_index + 1])
+            result["subdocument_id"].append(topk_index.item())
+    pd.DataFrame.from_dict(result).to_csv(config["validation_result_path"])
+
+
 def calc_wiki_accuracy(pred_context, label_context, indexes, k):
     correct = 0
     for i, index in enumerate(indexes):
         label = label_context[i]
-        for idx in index[:k]: # top-k
+        for idx in index[:k]:  # top-k
             if pred_context[idx].tolist() == label.tolist():
                 correct += 1
 
