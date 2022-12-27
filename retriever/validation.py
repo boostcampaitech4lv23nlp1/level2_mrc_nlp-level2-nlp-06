@@ -4,34 +4,12 @@ from transformers import AutoTokenizer
 from torch.utils.data import DataLoader, Dataset
 from model import DenseRetriever
 import torch
-from dataset import RetrieverDataset
+from dataset import RetrieverDataset, WikiDataset
 from tqdm import tqdm
 import pickle
 import os
 import argparse
 
-
-class wiki_dataset(Dataset):
-    def __init__(self, config, wiki_corpus, tokenizer):
-        super(wiki_dataset, self).__init__()
-        self.contexts = tokenizer(
-            wiki_corpus,
-            truncation=True,
-            max_length=384,
-            stride=config["stride"],
-            return_overflowing_tokens=True,
-            return_offsets_mapping=True,
-            padding="max_length",
-            return_tensors="pt"
-        )
-        
-    def __len__(self):
-        return len(self.contexts['input_ids'])
-    
-    def __getitem__(self, idx):
-        return {"input_ids": self.contexts['input_ids'][idx],
-                "attention_mask": self.contexts["attention_mask"][idx],
-                "token_type_ids": self.contexts["token_type_ids"][idx]}
 
 def main(config):
     # prepare wiki corpus
@@ -41,7 +19,7 @@ def main(config):
     
     tokenizer = AutoTokenizer.from_pretrained("klue/bert-base")
     print("process dataset...")
-    wikidataset = wiki_dataset(config, wiki_corpus, tokenizer)
+    wikidataset = WikiDataset(config, wiki_corpus, tokenizer)
     print("done!")
     dataloader = DataLoader(wikidataset, batch_size=16)
 
