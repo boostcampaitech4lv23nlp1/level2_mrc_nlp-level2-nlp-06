@@ -44,11 +44,11 @@ if __name__ == "__main__":
     train_dataset = preprocessor.get_train_dataset()
     eval_dataset = preprocessor.get_eval_dataset()
     eval_examples = preprocessor.get_eval_examples()
+    tokenizer = preprocessor.get_tokenizer()
     
     ## Model
     model_selection = ModelSelection(config)
     model = model_selection.get_model()
-    tokenizer = model_selection.get_tokenizer()
     model.to(device)
     
     ## TODO: seperate this part
@@ -60,6 +60,7 @@ if __name__ == "__main__":
             do_train=True,
             logging_steps=100,
             logging_dir="./log",
+            save_total_limit=2,
             evaluation_strategy='no',
             learning_rate=config["lr"],
             output_dir=config["output_dir"],
@@ -105,6 +106,7 @@ if __name__ == "__main__":
     
     train_result = trainer.train()
     print(train_result)
+    torch.save(model.state_dict(), config["model_save_path"])
     
     ## Evaluation
     if config["train_type"] == 0:      
@@ -117,6 +119,7 @@ if __name__ == "__main__":
             metric_key_prefix="eval"
         )
 
+        ## TODO: For generation model
         '''''
         for i in np.random.randint(0, len(datasets["validation"]), 5):
         print(generarate_answer(datasets["validation"][int(i)]))

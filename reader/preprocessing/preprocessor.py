@@ -13,16 +13,17 @@ class ExtractionProcessor():
         
         self.tokenizer = AutoTokenizer.from_pretrained(config["model_name"], use_fast=True)
         
-        ## TODO: for other dataset
-        #self.all_data = load_from_disk("/opt/ml/input/data/train_dataset")
-        self.all_data = load_dataset(config["dataset"])
+        if config["dataset"] = None:
+            self.all_data = load_from_disk("/opt/ml/input/data/train_dataset")
+        else:
+            self.all_data = load_dataset(config["dataset"])
         
         self.train_data = self.all_data["train"]
         self.eval_data = self.all_data["validation"]
         
-        ## Activate this only you are testing the code
-        self.train_data = self.train_data.select(range(config["num_sample"]))
-        self.eval_data = self.eval_data.select(range(config["num_sample"]))
+        if config["num_sample"] != -1:
+            self.train_data = self.train_data.select(range(config["num_sample"]))
+            self.eval_data = self.eval_data.select(range(config["num_sample"]))
         
         self.train_flag = True
         if self.train_flag:
@@ -291,3 +292,4 @@ class GenerationProcessor():
     def get_eval_dataset(self): return self.eval_dataset
     def get_train_data(self): return self.train_data
     def get_eval_data(self): return self.eval_data 
+    def get_tokenizer(self): return self.tokenizer
