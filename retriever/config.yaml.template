@@ -36,6 +36,7 @@ stride: 128
 model_name_or_path: "klue/bert-base"
 p_encoder_save_path: "path to save passage encoder in '.pt' format"
 q_encoder_save_path: "path to save question encoder in '.pt' format"
+output_dir: "path"
 
 
 ### Data path ###

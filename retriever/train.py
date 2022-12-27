@@ -1,17 +1,18 @@
-from dataset import RetrieverDataset, WikiDataset
-from model import DenseRetriever
-
+import os
+import yaml
 import torch
-from torch.utils.data import DataLoader
+import wandb
+import random
+import argparse
+import numpy as np
+import pandas as pd
+from tqdm import tqdm
 from torch.optim import AdamW
 import torch.nn.functional as F
-from transformers import TrainingArguments, get_linear_schedule_with_warmup
-import random
-import numpy as np
-import argparse
-import yaml
-import wandb
-from tqdm import tqdm
+from model import DenseRetriever
+from torch.utils.data import DataLoader
+from dataset import RetrieverDataset, WikiDataset
+from transformers import TrainingArguments, get_linear_schedule_with_warmup, AutoTokenizer
 
 
 def set_seed(random_seed):
@@ -37,14 +38,12 @@ class RetrieverTrainer:
             report_to=["wandb"]
         )
 
-        self.train_datasets = RetrieverDataset(self.config)
+        self.train_datasets = RetrieverDataset(self.config, mode="train")
         self.valid_datasets = RetrieverDataset(self.config, mode="validation")
 
         self.p_encoder = DenseRetriever(self.config).to(config["device"])
         self.q_encoder = DenseRetriever(self.config).to(config["device"])
 
-        self.num_neg = self.config["num_negative_passages_per_question"]
-        
         self.wikidataset = WikiDataset(config=config, tokenizer=self.train_datasets.tokenizer)
         self.wikiloader = DataLoader(self.wikidataset, batch_size=16, shuffle=False)
 
@@ -135,6 +134,9 @@ class RetrieverTrainer:
                 "valid_top100 accuracy" : valid_top100,
             })
 
+            print("\n*** SAVING THE CHECKPOINT ***\n")
+            self.save_checkpoint(epoch, valid_accuracy)
+
 
     def forward_step(self, batch):
         batch_size = batch[0].shape[0]
@@ -216,6 +218,11 @@ class RetrieverTrainer:
         valid_top5, valid_top20, valid_top100 = self.get_topk_result(valid_dataloader, context_embeddings)
         
         return train_top5, train_top20, train_top100, valid_top5, valid_top20, valid_top100
+
+
+    def save_checkpoint(self, epoch, valid_accuracy):
+        torch.save(self.p_encoder.state_dict(), f"{self.config['p_encoder_save_path'][:-3]}-{epoch}-{valid_accuracy:.6f}.pt")
+        torch.save(self.q_encoder.state_dict(), f"{self.config['p_encoder_save_path'][:-3]}-{epoch}-{valid_accuracy:.6f}.pt")
 
 
     def save_models(self):
