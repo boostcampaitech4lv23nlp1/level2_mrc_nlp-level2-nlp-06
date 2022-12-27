@@ -121,7 +121,8 @@ class RetrieverTrainer:
                 valid_loss += loss
                 
                 torch.cuda.empty_cache()
-            wandb.log({"valid_loss_per_epoch": valid_loss / len(train_dataloader)})
+            valid_loss /= len(valid_dataloader)
+            wandb.log({"valid_loss_per_epoch": valid_loss})
 
             print("\n*** CHECKING THE TRAIN & VALIDATION ACCURACY ***\n")
             train_top5, train_top20, train_top100, valid_top5, valid_top20, valid_top100 = self.count_match()
