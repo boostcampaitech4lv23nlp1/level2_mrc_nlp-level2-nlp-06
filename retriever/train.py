@@ -104,8 +104,6 @@ class RetrieverTrainer:
 
                 sim_scores = F.log_softmax(sim_scores, dim=-1)
 
-                # accuracy = Accuracy(task="multiclass", num_classes=batch[0].shape[0], top_k=1).to(config["device"])
-                # acc = accuracy(sim_scores, targets)
                 loss = F.nll_loss(sim_scores, targets)
                 train_loss += loss
                 wandb.log({"train_loss": loss, "epoch": epoch})
@@ -132,8 +130,6 @@ class RetrieverTrainer:
                 
                 sim_scores = F.log_softmax(sim_scores, dim=-1)
 
-                # accuracy = Accuracy(task="multiclass", num_classes=batch[0].shape[0], top_k=1).to(config["device"])
-                # acc = accuracy(sim_scores, targets)
                 loss = F.nll_loss(sim_scores, targets)
                 valid_loss += loss
 
