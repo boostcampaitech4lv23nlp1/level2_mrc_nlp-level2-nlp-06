@@ -151,8 +151,10 @@ if __name__ == "__main__":
             i += 1
         answer.append(prediction[i]["text"])
     
-    
-    test_data = load_from_disk("/opt/ml/input/data/test_dataset")["validation"]
+    if config["eval_or_test"] == 0:
+        test_data = load_from_disk("/opt/ml/input/data/train_dataset")["validation"]
+    elif config["eval_or_test"] == 1:
+        test_data = load_from_disk("/opt/ml/input/data/test_dataset")["validation"]
     
     test_id = test_data["id"]
     question = test_data["question"]
