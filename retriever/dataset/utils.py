@@ -4,6 +4,7 @@ class Preprocess_features:
         self.max_length = max_length
         self.stride = stride
 
+
     def process(self, train_dataset):
         contexts = [context.replace("\\n", "") for context in train_dataset["context"]]
         tokenized_contexts = self.tokenizer(

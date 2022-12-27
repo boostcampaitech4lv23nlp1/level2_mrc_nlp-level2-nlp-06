@@ -61,7 +61,7 @@ def main(config):
     test_dataset = RetrieverDataset(config, mode="test")
     test_dataloader = DataLoader(test_dataset, batch_size=config["batch_size"])
 
-    print("retriever > test.py > main: Preprocessing questions")
+    print(f"retriever > test.py > main: Preprocessing questions from {config['test_data_path']}")
     q_outputs = []
     for data in tqdm(test_dataloader):
         with torch.no_grad():
@@ -72,7 +72,7 @@ def main(config):
         q_outputs, dim=0
     )  # Size: (number of questions, dimension of hidden state)
 
-    ### Compute similarity scores between qeustions and subdocuments ###
+    ### Compute similarity scores between questions and subdocuments ###
     scores = torch.matmul(
         q_outputs, p_outputs.T
     )  # Size: (number of questions, number of subdocuments)
