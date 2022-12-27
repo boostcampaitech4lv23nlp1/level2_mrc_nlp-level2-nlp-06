@@ -36,18 +36,17 @@ stride: 128
 model_name_or_path: "klue/bert-base"
 p_encoder_save_path: "path to save passage encoder in '.pt' format"
 q_encoder_save_path: "path to save question encoder in '.pt' format"
-output_dir: "path"
+output_dir: "path" # huggingface trainer를 대비해서 넣은 옵션인데 TrainingArguments에 들어가기는 하지만 쓰이지는 않고 있음.
 
 
 ### Data path ###
 
 # Text data
-corpus_path: "path to import the corpus"
+corpus_path: "path to import wiki corpus"
 train_data_path: "path to import the training (and validation) dataset"
 test_data_path: "path to import the test dataset"
 
 # Features
-corpus_feature_path: "path to save encoded corpus"
-embedding_path: "path to save corpus features in .npy format."
+corpus_feature_path: "path to save encoded corpus. If already exists, then model will load file instead of generate features."
 validation_result_path: "path to save the validation result in .csv format"
 inference_result_path: "path to save the inference result in .csv format"
