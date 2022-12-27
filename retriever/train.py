@@ -2,7 +2,6 @@ from dataset import RetrieverDataset, WikiDataset
 from model import DenseRetriever
 
 import torch
-import pandas as pd
 from torch.utils.data import DataLoader
 from torch.optim import AdamW
 import torch.nn.functional as F
