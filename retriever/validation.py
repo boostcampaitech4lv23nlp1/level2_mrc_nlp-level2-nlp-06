@@ -16,6 +16,7 @@ def main(config):
     print(f"retriever > validation.py > main: Preprocess wikipedia documents")
     tokenizer = AutoTokenizer.from_pretrained(config["model_name_or_path"])
     wiki_dataset = WikiDataset(config, tokenizer)
+    print("done!")
     wiki_dataloader = DataLoader(wiki_dataset, batch_size=config["batch_size"])
 
     ### Load the trained passage and question encoder ###
