@@ -85,7 +85,10 @@ class RetrieverDataset(Dataset):
             )
 
     def __len__(self):
-        return len(self.dataset)
+        if self.mode in ["train", "validation"]:
+            return len(self.tokenized_passages["input_ids"])
+        elif self.mode == "test":
+            return len(self.dataset)
 
     def construct_in_batch_negative_sampled_dataset(self):
         column_names = self.dataset.column_names
