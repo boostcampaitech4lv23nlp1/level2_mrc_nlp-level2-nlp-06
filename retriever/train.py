@@ -136,7 +136,7 @@ class RetrieverTrainer:
             })
 
             print("\n*** SAVING THE CHECKPOINT ***\n")
-            self.save_checkpoint(epoch, valid_accuracy)
+            self.save_checkpoint(epoch, valid_loss)
 
 
     def forward_step(self, batch):
@@ -221,14 +221,10 @@ class RetrieverTrainer:
         return train_top5, train_top20, train_top100, valid_top5, valid_top20, valid_top100
 
 
-    def save_checkpoint(self, epoch, valid_accuracy):
-        torch.save(self.p_encoder.state_dict(), f"{self.config['p_encoder_save_path'][:-3]}-{epoch}-{valid_accuracy:.6f}.pt")
-        torch.save(self.q_encoder.state_dict(), f"{self.config['p_encoder_save_path'][:-3]}-{epoch}-{valid_accuracy:.6f}.pt")
+    def save_checkpoint(self, epoch, valid_loss):
+        torch.save(self.p_encoder.state_dict(), f"{self.config['p_encoder_save_path'][:-3]}-{epoch}-{valid_loss:.6f}.pt")
+        torch.save(self.q_encoder.state_dict(), f"{self.config['p_encoder_save_path'][:-3]}-{epoch}-{valid_loss:.6f}.pt")
 
-
-    def save_models(self):
-        torch.save(self.p_encoder.state_dict(), self.config["p_encoder_save_path"])
-        torch.save(self.q_encoder.state_dict(), self.config["q_encoder_save_path"])
 
 
 def main(config):
@@ -245,7 +241,6 @@ def main(config):
 
     trainer = RetrieverTrainer(config)
     trainer.train()
-    trainer.save_models()
 
 
 if __name__ == "__main__":
