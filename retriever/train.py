@@ -48,18 +48,6 @@ class RetrieverTrainer:
         
         self.wikidataset = WikiDataset(config=config, tokenizer=self.train_datasets.tokenizer)
         self.wikiloader = DataLoader(self.wikidataset, batch_size=16, shuffle=False)
-        
-        # wiki_contexts = pd.read_csv(config["corpus_path"])["text"]
-        # self.wiki_contexts = [context.replace("\\n", "") for context in wiki_contexts]
-        # self.tokenized_corpus = self.train_datasets.tokenizer(
-        #     self.wiki_contexts,
-        #     truncation=True,
-        #     stride=config["stride"],
-        #     return_overflowing_tokens=True,
-        #     return_offsets_mapping=True,
-        #     padding="max_length",
-        #     return_tensors="pt"
-        # )
 
 
     def train(self):
