@@ -199,6 +199,7 @@ class RetrieverTrainer:
         
         return top5, top20, top100
 
+    ## TODO: top-k accuracy 제대로 작동되게 수정하기...
     def count_match(self):
         self.p_encoder.eval()
         self.q_encoder.eval()
@@ -222,6 +223,7 @@ class RetrieverTrainer:
 
 
     def save_checkpoint(self, epoch, valid_loss):
+        ## TODO: save_path로 디렉토리를 받도록 수정하기. 이를 위해선 inference 코드들이 수정되어야 함. -> inference용 config 만들기.
         torch.save(self.p_encoder.state_dict(), f"{self.config['p_encoder_save_path'][:-3]}-{epoch}-{valid_loss:.6f}.pt")
         torch.save(self.q_encoder.state_dict(), f"{self.config['p_encoder_save_path'][:-3]}-{epoch}-{valid_loss:.6f}.pt")
 
