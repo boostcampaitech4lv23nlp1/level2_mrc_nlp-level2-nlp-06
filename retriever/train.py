@@ -1,20 +1,18 @@
-from dataset import RetrieverDataset
-from model import DenseRetriever
-
+import os
+import yaml
 import torch
+import wandb
+import random
+import argparse
+import numpy as np
 import pandas as pd
-from torch.utils.data import DataLoader
+from tqdm import tqdm
 from torch.optim import AdamW
 import torch.nn.functional as F
-from torchmetrics import Accuracy
+from model import DenseRetriever
+from dataset import RetrieverDataset
+from torch.utils.data import DataLoader
 from transformers import TrainingArguments, get_linear_schedule_with_warmup, AutoTokenizer
-import random
-import numpy as np
-import argparse
-import yaml
-import wandb
-from tqdm import tqdm
-from datasets import load_from_disk
 
 
 def set_seed(random_seed):
@@ -40,13 +38,11 @@ class RetrieverTrainer:
             report_to=["wandb"]
         )
 
-        self.train_datasets = RetrieverDataset(self.config)
+        self.train_datasets = RetrieverDataset(self.config, mode="train")
         self.valid_datasets = RetrieverDataset(self.config, mode="validation")
 
         self.p_encoder = DenseRetriever(self.config).to(config["device"])
         self.q_encoder = DenseRetriever(self.config).to(config["device"])
-
-        self.num_neg = self.config["num_negative_passages_per_question"]
 
         tokenizer = AutoTokenizer.from_pretrained(config["model_name_or_path"])
         self.tokenized_corpus = {"input_ids": [], "attention_mask": [], "token_type_ids": []}
@@ -152,6 +148,9 @@ class RetrieverTrainer:
             print("*** VALIDATION ACCURACY:", valid_accuracy)
             wandb.log({"train_accuracy": train_accuracy, "valid_accuracy": valid_accuracy})
 
+            print("\n*** SAVING THE CHECKPOINT ***\n")
+            self.save_checkpoint(epoch, valid_accuracy)
+
 
     def forward_step(self, batch):
         batch_size = batch[0].shape[0]
@@ -245,6 +244,11 @@ class RetrieverTrainer:
             torch.cuda.empty_cache()
         valid_accuracy /= (len(valid_dataloader) * self.config["batch_size"])
         return train_accuracy, valid_accuracy
+
+
+    def save_checkpoint(self, epoch, valid_accuracy):
+        torch.save(self.p_encoder.state_dict(), f"{self.config['p_encoder_save_path'][:-3]}-{epoch}-{valid_accuracy:.6f}.pt")
+        torch.save(self.q_encoder.state_dict(), f"{self.config['p_encoder_save_path'][:-3]}-{epoch}-{valid_accuracy:.6f}.pt")
 
 
     def save_models(self):
