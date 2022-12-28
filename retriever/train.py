@@ -42,10 +42,10 @@ class RetrieverTrainer:
         self.valid_datasets = RetrieverDataset(self.config, mode="validation")
 
         self.p_encoder = DenseRetriever(self.config).to(config["device"])
-        self.q_encoder = DenseRetriever(self.config).to(config["device"])
+        # self.q_encoder = DenseRetriever(self.config).to(config["device"])
 
-        self.wikidataset = WikiDataset(config=config, tokenizer=self.train_datasets.tokenizer)
-        self.wikiloader = DataLoader(self.wikidataset, batch_size=16, shuffle=False)
+        # self.wikidataset = WikiDataset(config=config, tokenizer=self.train_datasets.tokenizer)
+        # self.wikiloader = DataLoader(self.wikidataset, batch_size=16, shuffle=False)
 
 
     def train(self):
@@ -57,8 +57,8 @@ class RetrieverTrainer:
         optimizer_grouped_parameters = [
             {"params": [p for n, p in self.p_encoder.named_parameters() if not any(nd in n for nd in no_decay)], "weight_decay": self.config["weight_decay"]},
             {"params": [p for n, p in self.p_encoder.named_parameters() if any(nd in n for nd in no_decay)], "weight_decay": 0.0},
-            {"params": [p for n, p in self.q_encoder.named_parameters() if not any(nd in n for nd in no_decay)], "weight_decay": self.config["weight_decay"]},
-            {"params": [p for n, p in self.q_encoder.named_parameters() if any(nd in n for nd in no_decay)], "weight_decay": 0.0}
+            # {"params": [p for n, p in self.q_encoder.named_parameters() if not any(nd in n for nd in no_decay)], "weight_decay": self.config["weight_decay"]},
+            # {"params": [p for n, p in self.q_encoder.named_parameters() if any(nd in n for nd in no_decay)], "weight_decay": 0.0}
         ]
         self.optimizer = AdamW(
             optimizer_grouped_parameters,
@@ -76,7 +76,7 @@ class RetrieverTrainer:
         global_step = 0
 
         self.p_encoder.zero_grad()
-        self.q_encoder.zero_grad()
+        # self.q_encoder.zero_grad()
         torch.cuda.empty_cache()
 
         for epoch in tqdm(range(self.config["epochs"])):
@@ -84,7 +84,7 @@ class RetrieverTrainer:
             valid_loss = 0
             for batch in tqdm(train_dataloader):
                 self.p_encoder.train()
-                self.q_encoder.train()
+                # self.q_encoder.train()
                 _, _, sim_scores = self.forward_step(batch)
                 targets = torch.arange(0, batch[0].shape[0]).long()
                 targets = targets.to(self.args.device)
@@ -99,7 +99,7 @@ class RetrieverTrainer:
                 self.optimizer.step()
                 self.scheduler.step()
 
-                self.q_encoder.zero_grad()
+                # self.q_encoder.zero_grad()
                 self.p_encoder.zero_grad()
 
                 global_step += 1
@@ -109,7 +109,7 @@ class RetrieverTrainer:
 
             for batch in tqdm(valid_dataloader):
                 self.p_encoder.eval()
-                self.q_encoder.eval()
+                # self.q_encoder.eval()
                 with torch.no_grad():
                     _, _, sim_scores = self.forward_step(batch)
                 targets = torch.arange(0, batch[0].shape[0]).long()
@@ -124,16 +124,16 @@ class RetrieverTrainer:
             valid_loss /= len(valid_dataloader)
             wandb.log({"valid_loss_per_epoch": valid_loss})
 
-            # print("\n*** CHECKING THE TRAIN & VALIDATION ACCURACY ***\n")
-            # train_top5, train_top20, train_top100, valid_top5, valid_top20, valid_top100 = self.count_match()
-            # wandb.log({
-            #     "train_top5 accuracy" : train_top5,
-            #     "train_top20 accuracy" : train_top20,
-            #     "train_top100 accuracy" : train_top100,
-            #     "valid_top5 accuracy" : valid_top5,
-            #     "valid_top20 accuracy" : valid_top20,
-            #     "valid_top100 accuracy" : valid_top100,
-            # })
+            print("\n*** CHECKING THE TRAIN & VALIDATION ACCURACY ***\n")
+            train_top5, train_top20, train_top100, valid_top5, valid_top20, valid_top100 = self.count_match()
+            wandb.log({
+                "train_top5 accuracy" : train_top5,
+                "train_top20 accuracy" : train_top20,
+                "train_top100 accuracy" : train_top100,
+                "valid_top5 accuracy" : valid_top5,
+                "valid_top20 accuracy" : valid_top20,
+                "valid_top100 accuracy" : valid_top100,
+            })
 
             print("\n*** SAVING THE CHECKPOINT ***\n")
             self.save_checkpoint(epoch, valid_loss)
@@ -157,7 +157,7 @@ class RetrieverTrainer:
         del batch
         torch.cuda.empty_cache()
         p_outputs = self.p_encoder(**p_inputs)
-        q_outputs = self.q_encoder(**q_inputs)
+        q_outputs = self.p_encoder(**q_inputs)
 
         sim_scores = torch.matmul(q_outputs, p_outputs.T).squeeze()
         sim_scores = sim_scores.view(batch_size, -1)
@@ -202,7 +202,7 @@ class RetrieverTrainer:
     ## TODO: top-k accuracy 제대로 작동되게 수정하기...
     def count_match(self):
         self.p_encoder.eval()
-        self.q_encoder.eval()
+        # self.q_encoder.eval()
 
         context_embeddings = []
         print("make context feature...(it takes a while...)")
@@ -225,7 +225,7 @@ class RetrieverTrainer:
     def save_checkpoint(self, epoch, valid_loss):
         ## TODO: save_path로 디렉토리를 받도록 수정하기. 이를 위해선 inference 코드들이 수정되어야 함. -> inference용 config 만들기.
         torch.save(self.p_encoder.state_dict(), f"{self.config['p_encoder_save_path'][:-3]}-{epoch}-{valid_loss:.6f}.pt")
-        torch.save(self.q_encoder.state_dict(), f"{self.config['q_encoder_save_path'][:-3]}-{epoch}-{valid_loss:.6f}.pt")
+        # torch.save(self.q_encoder.state_dict(), f"{self.config['q_encoder_save_path'][:-3]}-{epoch}-{valid_loss:.6f}.pt")
 
 
 
