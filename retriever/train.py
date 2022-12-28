@@ -99,6 +99,8 @@ class RetrieverTrainer:
 
         self.p_encoder = DenseRetriever(self.config).to(config["device"])
         # self.q_encoder = DenseRetriever(self.config).to(config["device"])
+        
+        self.topk = TOPK(config, self.train_datasets.tokenizer)
 
 
     def train(self):
@@ -178,15 +180,17 @@ class RetrieverTrainer:
             wandb.log({"valid_loss_per_epoch": valid_loss})
 
             print("\n*** CHECKING THE TRAIN & VALIDATION ACCURACY ***\n")
-            # train_top5, train_top20, train_top100, valid_top5, valid_top20, valid_top100 = self.count_match()
-            # wandb.log({
-            #     "train_top5 accuracy" : train_top5,
-            #     "train_top20 accuracy" : train_top20,
-            #     "train_top100 accuracy" : train_top100,
-            #     "valid_top5 accuracy" : valid_top5,
-            #     "valid_top20 accuracy" : valid_top20,
-            #     "valid_top100 accuracy" : valid_top100,
-            # })
+            train_top5, train_top20, train_top100 = self.topk.get_results(self, self.p_encoder, epoch, train_dataloader)
+            valid_top5, valid_top20, valid_top100 = self.topk.get_results(self, self.p_encoder, epoch, valid_dataloader)
+            train_top5, train_top20, train_top100, valid_top5, valid_top20, valid_top100 = self.count_match()
+            wandb.log({
+                "train_top5 accuracy" : train_top5,
+                "train_top20 accuracy" : train_top20,
+                "train_top100 accuracy" : train_top100,
+                "valid_top5 accuracy" : valid_top5,
+                "valid_top20 accuracy" : valid_top20,
+                "valid_top100 accuracy" : valid_top100,
+            })
 
             print("\n*** SAVING THE CHECKPOINT ***\n")
             self.save_checkpoint(epoch, valid_loss)
@@ -218,61 +222,6 @@ class RetrieverTrainer:
         del q_inputs, p_inputs
 
         return p_outputs, q_outputs, sim_scores
-
-    # def calc_wiki_accuracy(self, pred_context, label_context, indexes, k):
-    #     correct = 0
-    #     for i, index in enumerate(indexes):
-    #         label = label_context[i]
-    #         for idx in index[:k]: # top-k
-    #             if pred_context[idx].tolist() == label.tolist():
-    #                 correct += 1
-    #                 break
-                
-    #     return correct/len(indexes)
-    
-    # def get_topk_result(self, dataloader, context_embeddings):
-    #     question_embeddings = []
-    #     label_embeddings = []
-    #     for data in dataloader:
-    #         with torch.no_grad():
-    #             p_outputs, q_outputs, _ = self.forward_step(data)
-    #             question_embeddings.append(q_outputs.cpu())
-    #             label_embeddings.append(p_outputs.cpu())
-    #     question_embeddings = torch.cat(question_embeddings, dim=0)
-    #     label_embeddings = torch.cat(label_embeddings, dim=0)
-    #     scores = torch.matmul(question_embeddings, context_embeddings.T)
-        
-    #     topk_indexes = []
-    #     for score in scores:
-    #         topk_res = torch.topk(score, 100)
-    #         topk_indexes.append(topk_res.indices)
-    #     top5 = self.calc_wiki_accuracy(context_embeddings, label_embeddings, topk_indexes, 5)
-    #     top20 = self.calc_wiki_accuracy(context_embeddings, label_embeddings, topk_indexes, 20)
-    #     top100 = self.calc_wiki_accuracy(context_embeddings, label_embeddings, topk_indexes, 100)
-        
-    #     return top5, top20, top100
-
-    # ## TODO: top-k accuracy 제대로 작동되게 수정하기...
-    # def count_match(self):
-    #     self.p_encoder.eval()
-    #     # self.q_encoder.eval()
-
-    #     context_embeddings = []
-    #     print("make context feature...(it takes a while...)")
-    #     for data in tqdm(self.wikiloader):
-    #         data = {k: v.to(config["device"]) for k, v in data.items()}
-    #         with torch.no_grad():
-    #             p_output = self.p_encoder(**data)
-    #         context_embeddings.append(p_output.cpu())
-    #     context_embeddings = torch.cat(context_embeddings, dim=0)
-
-    #     train_dataloader = DataLoader(self.train_datasets, batch_size=self.config["batch_size"])
-    #     valid_dataloader = DataLoader(self.valid_datasets, batch_size=self.config["batch_size"])
-
-    #     train_top5, train_top20, train_top100 = self.get_topk_result(train_dataloader, context_embeddings)
-    #     valid_top5, valid_top20, valid_top100 = self.get_topk_result(valid_dataloader, context_embeddings)
-        
-    #     return train_top5, train_top20, train_top100, valid_top5, valid_top20, valid_top100
 
 
     def save_checkpoint(self, epoch, valid_loss):
