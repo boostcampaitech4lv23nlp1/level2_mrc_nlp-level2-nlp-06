@@ -44,8 +44,8 @@ class RetrieverTrainer:
         self.p_encoder = DenseRetriever(self.config).to(config["device"])
         # self.q_encoder = DenseRetriever(self.config).to(config["device"])
 
-        # self.wikidataset = WikiDataset(config=config, tokenizer=self.train_datasets.tokenizer)
-        # self.wikiloader = DataLoader(self.wikidataset, batch_size=16, shuffle=False)
+        self.wikidataset = WikiDataset(config=config, tokenizer=self.train_datasets.tokenizer)
+        self.wikiloader = DataLoader(self.wikidataset, batch_size=32, shuffle=False)
 
 
     def train(self):
