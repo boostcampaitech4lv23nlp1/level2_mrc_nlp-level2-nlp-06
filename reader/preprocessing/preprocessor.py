@@ -31,9 +31,9 @@ class ExtractionProcessor():
         else:
             self.column_names = self.eval_data.column_names
             
-        self.question_column_name = "question" if "question" in self.column_names else column_names[0]
-        self.context_column_name = "context" if "context" in self.column_names else column_names[1]
-        self.answer_column_name = "answers" if "answers" in self.column_names else column_names[2]
+        self.question_column_name = "question" if "question" in self.column_names else self.column_names[0]
+        self.context_column_name = "context" if "context" in self.column_names else self.column_names[1]
+        self.answer_column_name = "answers" if "answers" in self.column_names else self.column_names[2]
 
         self.position = config["position"]
         
