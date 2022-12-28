@@ -35,21 +35,22 @@ if __name__ == "__main__":
     config = get_config()
     device = torch.device(f"cuda" if torch.cuda.is_available() else "cpu")
     
+    ## Model
+    model_selection = ModelSelection(config)
+    tokenizer = model_selection.get_tokenizer()
+    model = model_selection.get_model()
+    model.to(device)
+    
     ## Data
     if config["train_type"] == 0:
-        preprocessor = ExtractionProcessor(config)
+        preprocessor = ExtractionProcessor(config, tokenizer)
     elif config["train_type"] == 1:
-        preprocessor = GenerationProcessor(config)
+        preprocessor = GenerationProcessor(config, tokenizer)
         
     train_dataset = preprocessor.get_train_dataset()
     eval_dataset = preprocessor.get_eval_dataset()
     eval_examples = preprocessor.get_eval_examples()
-    tokenizer = preprocessor.get_tokenizer()
     
-    ## Model
-    model_selection = ModelSelection(config)
-    model = model_selection.get_model()
-    model.to(device)
     
     ## TODO: seperate this part
     ## Training

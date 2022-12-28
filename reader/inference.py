@@ -88,7 +88,11 @@ if __name__ == "__main__":
         end_indexes = np.argsort(end_logits)[-1 : -config["n_best_size"]-1 : -1].tolist()
         
         for start_index in start_indexes:
+            if not start_index: 
+                continue
             for end_index in end_indexes:
+                if not end_index:
+                    continue
                 # out-of-scope answers는 고려하지 않습니다.
                 if (
                     start_index >= len(offset_mapping)
@@ -141,10 +145,10 @@ if __name__ == "__main__":
         i = 0
         while (
             prediction[i]["text"] == "" or 
-            len(prediction[i]["text"]) > config["max_answer_length"] or
-            "\n" in prediction[i]["text"] or
-            "." in prediction[i]["text"] or
-            "," in prediction[i]["text"]
+            len(prediction[i]["text"]) > config["max_answer_length"] #or
+            #"\n" in prediction[i]["text"] or
+            #"." in prediction[i]["text"] or
+            #"," in prediction[i]["text"]
         ):
             if i == len(prediction) - 1: 
                 break
@@ -160,7 +164,6 @@ if __name__ == "__main__":
     question = test_data["question"]
     
     result = OrderedDict()
-    
     for i in range(len(answer)):
         result[test_id[i]] = answer[i]
         

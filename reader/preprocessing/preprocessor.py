@@ -7,13 +7,13 @@ from transformers import default_data_collator, AutoTokenizer, EvalPrediction
 
 
 class ExtractionProcessor():
-    def __init__(self, config):
+    def __init__(self, config, tokenizer):
         
         self.config = config
         
-        self.tokenizer = AutoTokenizer.from_pretrained(config["model_name"], use_fast=True)
+        self.tokenizer = tokenizer
         
-        if config["dataset"] = None:
+        if config["dataset"] == None:
             self.all_data = load_from_disk("/opt/ml/input/data/train_dataset")
         else:
             self.all_data = load_dataset(config["dataset"])
@@ -193,10 +193,10 @@ class ExtractionProcessor():
 
 
 class GenerationProcessor():
-    def __init__(self, config):
+    def __init__(self, config, tokenizer):
         self.config = config
         
-        self.tokenizer = AutoTokenizer.from_pretrained(config["model_name"], use_fast=True)
+        self.tokenizer = tokenizer
 
         ## TODO: for other dataset
         #self.all_data = load_from_disk("/opt/ml/input/data/train_dataset")
@@ -252,6 +252,7 @@ class GenerationProcessor():
             model_inputs["example_id"].append(examples["id"][i])
         return model_inputs
     
+    
     def postprocess_text(self, preds, labels):
         """
         postprocess는 nltk를 이용합니다.
@@ -292,4 +293,3 @@ class GenerationProcessor():
     def get_eval_dataset(self): return self.eval_dataset
     def get_train_data(self): return self.train_data
     def get_eval_data(self): return self.eval_data 
-    def get_tokenizer(self): return self.tokenizer

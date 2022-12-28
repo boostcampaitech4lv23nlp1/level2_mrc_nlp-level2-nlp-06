@@ -1,5 +1,6 @@
 retriver_path:  "/opt/ml/mrc_git/files/retriever_output_sample.csv"
 result_path: "/opt/ml/results/"
+eval_or_test: 1                         ## {0: evaluation, 1: test}
 train_type: 0                           ## {0: Extraction Based, 1: Generation Based}
 model_load_type: 0                      ## {0 = Load by "pt" file, 1 = Load by "checkpoint"}
 model_name: "klue/bert-base"
