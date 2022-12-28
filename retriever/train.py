@@ -28,21 +28,26 @@ class TOPK:
         self.tokenizer = tokenizer
         self.wiki_dataset = WikiDataset(config, tokenizer)
         self.wiki_dataloader = DataLoader(self.wiki_dataset, batch_size=config["batch_size"])
+        self.p_outputs = None
         
-    def get_results(self, p_encoder, epoch, dataloader):
+    def get_results(self, p_encoder, epoch, dataloader, inference=True):
         p_encoder.eval()
-        p_outputs = []
-        for data in tqdm(self.wiki_dataloader):
-            data = {k: v.to('cuda') for k, v in data.items()}
-            with torch.no_grad():
-                p_output = p_encoder(**data)
-            p_outputs.append(p_output.cpu())
-        p_outputs = torch.cat(p_outputs, dim=0)
-        # Save corpus features.
-        corpus_feature_paths = config["corpus_feature_path"].split(".")[0]
-        corpus_feature_paths = corpus_feature_paths + str(epoch) + ".pickle"
-        with open(corpus_feature_paths, "wb") as f:
-            pickle.dump(p_outputs, f)
+        if inference:
+            p_outputs = []
+            for data in tqdm(self.wiki_dataloader):
+                data = {k: v.to('cuda') for k, v in data.items()}
+                with torch.no_grad():
+                    p_output = p_encoder(**data)
+                p_outputs.append(p_output.cpu())
+            p_outputs = torch.cat(p_outputs, dim=0)
+            # Save corpus features.
+            corpus_feature_paths = config["corpus_feature_path"].replace(".pickle", "")
+            corpus_feature_paths = corpus_feature_paths + str(epoch) + ".pickle"
+            with open(corpus_feature_paths, "wb") as f:
+                pickle.dump(p_outputs, f)
+            self.p_outputs = p_outputs
+        else:
+            p_outputs = self.p_outputs
             
         q_outputs = []
         label_outputs = []
@@ -180,9 +185,8 @@ class RetrieverTrainer:
             wandb.log({"valid_loss_per_epoch": valid_loss})
 
             print("\n*** CHECKING THE TRAIN & VALIDATION ACCURACY ***\n")
-            train_top5, train_top20, train_top100 = self.topk.get_results(self, self.p_encoder, epoch, train_dataloader)
-            valid_top5, valid_top20, valid_top100 = self.topk.get_results(self, self.p_encoder, epoch, valid_dataloader)
-            train_top5, train_top20, train_top100, valid_top5, valid_top20, valid_top100 = self.count_match()
+            train_top5, train_top20, train_top100 = self.topk.get_results(self.p_encoder, epoch, train_dataloader, True)
+            valid_top5, valid_top20, valid_top100 = self.topk.get_results(self.p_encoder, epoch, valid_dataloader, False)
             wandb.log({
                 "train_top5 accuracy" : train_top5,
                 "train_top20 accuracy" : train_top20,
