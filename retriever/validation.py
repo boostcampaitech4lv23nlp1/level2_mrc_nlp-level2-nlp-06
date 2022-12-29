@@ -22,16 +22,12 @@ def main(config):
     ### Load the trained passage and question encoder ###
     print(f"retriever > validation.py > main: Load the trained encoders")
     p_encoder = DenseRetriever(config)
-    # q_encoder = DenseRetriever(config)
 
     p_encoder.load_state_dict(torch.load(config["p_encoder_load_path"]))
-    q_encoder.load_state_dict(torch.load(config["q_encoder_load_path"]))
 
     p_encoder.eval()
-    # q_encoder.eval()
 
     p_encoder = p_encoder.to("cuda")
-    # q_encoder = q_encoder.to("cuda")
 
     ### Get the features of wikipedia documents ###
     if os.path.exists(config["corpus_feature_path"]):
