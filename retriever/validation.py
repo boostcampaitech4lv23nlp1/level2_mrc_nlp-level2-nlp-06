@@ -97,10 +97,12 @@ def main(config):
     result = {
         "question": [],
         "answer_document":[],
+        "answer_document_id": [],
         "subdocument": [],
         "question_id": [],
         "document_id": [],
         "subdocument_id": [],
+        "similarity_score": []
     }
     real_question_index = -1
     before_question = None
@@ -130,7 +132,8 @@ def main(config):
             )
             result["subdocument"].append(wiki_dataset.corpus[result["document_id"][-1]][token_start_index:token_end_index + 1])
             result["subdocument_id"].append(topk_index.item())
-    pd.DataFrame.from_dict(result).to_csv("test.csv")
+            result["similarity_score"].append(scores[question_index][topk_index].item())
+    pd.DataFrame.from_dict(result).to_csv(config["validation_result_path"])
 
 
 def calc_wiki_accuracy(pred_context, label_context, indexes, k):
