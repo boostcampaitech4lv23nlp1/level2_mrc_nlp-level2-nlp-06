@@ -22,7 +22,7 @@ def main(config):
     print(f"retriever > test.py > main: Load the trained encoders")
     p_encoder = DenseRetriever(config)
 
-    p_encoder.load_state_dict(torch.load(config["p_encoder_save_path"]))
+    p_encoder.load_state_dict(torch.load(config["p_encoder_load_path"]))
 
     p_encoder.eval()
 
