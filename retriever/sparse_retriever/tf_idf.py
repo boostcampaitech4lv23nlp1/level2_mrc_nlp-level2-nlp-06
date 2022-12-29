@@ -42,8 +42,8 @@ class TfIdfRetrieval:
         query: list of questions in string format.(list)
         k: number of top object.(int)
         '''
+        print("vectorize question queries...")
         query_vec = self.vectorizer.transform(query)
-        assert query_vec.max() == 0., "word in question never apeeared in corpus!"
         results = query_vec * self.sp_matrix.T
 
         docs_scores = []
