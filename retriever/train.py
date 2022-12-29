@@ -99,11 +99,11 @@ class RetrieverTrainer:
             report_to=["wandb"]
         )
 
-        self.train_datasets = RetrieverDataset(self.config, mode="train")
+        if self.config["use_multiple_datasets"]:
+            self.train_datasets = AugmentedRetrieverDataset(self.config)
+        else:
+            self.train_datasets = RetrieverDataset(self.config, mode="train")
         self.valid_datasets = RetrieverDataset(self.config, mode="validation")
-
-        # self.train_datasets = AugmentedRetrieverDataset(self.config)
-        # self.valid_datasets = RetrieverDataset(self.config, mode="validation")
 
         self.p_encoder = DenseRetriever(self.config).to(config["device"])
         if config["p_encoder_load_path"] and os.path.exists(config["p_encoder_load_path"]):
