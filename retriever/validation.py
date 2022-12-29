@@ -24,8 +24,8 @@ def main(config):
     p_encoder = DenseRetriever(config)
     q_encoder = DenseRetriever(config)
 
-    p_encoder.load_state_dict(torch.load(config["p_encoder_save_path"]))
-    q_encoder.load_state_dict(torch.load(config["q_encoder_save_path"]))
+    p_encoder.load_state_dict(torch.load(config["p_encoder_load_path"]))
+    q_encoder.load_state_dict(torch.load(config["q_encoder_load_path"]))
 
     p_encoder.eval()
     q_encoder.eval()

@@ -11,7 +11,7 @@ from torch.optim import AdamW
 import torch.nn.functional as F
 from model import DenseRetriever
 from torch.utils.data import DataLoader
-from dataset import RetrieverDataset, WikiDataset
+from dataset import RetrieverDataset, WikiDataset, AugmentedRetrieverDataset
 from transformers import TrainingArguments, get_linear_schedule_with_warmup, AutoTokenizer
 
 
@@ -41,8 +41,25 @@ class RetrieverTrainer:
         self.train_datasets = RetrieverDataset(self.config, mode="train")
         self.valid_datasets = RetrieverDataset(self.config, mode="validation")
 
+        # self.train_datasets = AugmentedRetrieverDataset(self.config)
+        # self.valid_datasets = RetrieverDataset(self.config, mode="validation")
+
         self.p_encoder = DenseRetriever(self.config).to(config["device"])
         self.q_encoder = DenseRetriever(self.config).to(config["device"])
+
+        if config["p_encoder_load_path"] and os.path.exists(config["p_encoder_load_path"]):
+            print(
+                f"retriever > train.py > main: Saved passage encoder file {config['p_encoder_load_path']} is found."
+            )
+            print("Load the pre-trained passage encoder...")
+            self.p_encoder.load_state_dict(torch.load(config["p_encoder_load_path"]))
+        if config["q_encoder_load_path"] and os.path.exists(config["q_encoder_load_path"]):
+            print(
+                f"retriever > train.py > main: Saved question encoder file {config['q_encoder_load_path']} is found."
+            )
+            print("Load the pre-trained question encoder...")
+            self.q_encoder.load_state_dict(torch.load(config["q_encoder_load_path"]))
+
 
         self.wikidataset = WikiDataset(config=config, tokenizer=self.train_datasets.tokenizer)
         self.wikiloader = DataLoader(self.wikidataset, batch_size=16, shuffle=False)
