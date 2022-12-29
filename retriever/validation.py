@@ -97,10 +97,12 @@ def main(config):
     result = {
         "question": [],
         "answer_document":[],
+        "answer_document_id": [],
         "subdocument": [],
         "question_id": [],
         "document_id": [],
         "subdocument_id": [],
+        "similarity_score": []
     }
     for question_index in range(len(valid_dataset.dataset)):
         for topk_index in topk_indices[question_index]:
@@ -114,12 +116,14 @@ def main(config):
             token_end_index = wiki_dataset.contexts["offset_mapping"][topk_index][token_end_index][1]
             result["question"].append(valid_dataset.dataset[question_index]["question"])
             result["question_id"].append(question_index)
+            result["answer_document_id"].append(valid_dataset.dataset[question_index]["document_id"])
             result["answer_document"].append(valid_dataset.dataset[question_index]["context"])
             result["document_id"].append(
                 wiki_dataset.contexts["overflow_to_sample_mapping"][topk_index].item()
             )
             result["subdocument"].append(wiki_dataset.corpus[result["document_id"][-1]][token_start_index:token_end_index + 1])
             result["subdocument_id"].append(topk_index.item())
+            result["similarity_score"].append(scores[question_index][topk_index])
     pd.DataFrame.from_dict(result).to_csv(config["validation_result_path"])
 
 
