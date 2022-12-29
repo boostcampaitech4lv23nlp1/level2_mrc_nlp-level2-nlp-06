@@ -32,9 +32,13 @@ stride: 128
 
 ### Model path ###
 
+# Save path
 model_name_or_path: "klue/bert-base"
 p_encoder_save_path: "path to save passage encoder in '.pt' format"
 output_dir: "path" # huggingface trainer를 대비해서 넣은 옵션인데 TrainingArguments에 들어가기는 하지만 쓰이지는 않고 있음.
+
+# Load path
+p_encoder_load_path: "/opt/ml/saved_retriever_model/passage/passage-dataset-ours-after-korquad-klue-bert-base-5-0.100085.pt"
 
 
 ### Data path ###
