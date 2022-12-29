@@ -79,6 +79,7 @@ class TOPK:
             for idx in index[:k]:  # top-k
                 if pred_context[idx].tolist() == label.tolist():
                     correct += 1
+                    break
 
         return correct / len(indexes)
         
