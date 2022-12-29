@@ -1,7 +1,6 @@
-import json
 from sklearn.feature_extraction.text import TfidfVectorizer
-from transformers import AutoTokenizer
 from tqdm import tqdm
+import pandas as pd
 import numpy as np
 import pickle
 import os
@@ -15,7 +14,8 @@ class TfIdfRetrieval:
         pickle_path : path of pretrained vectorizer pickle file. If not exists, it will save new pretrained vectorizer.
         '''
         with open(corpus_path, "r") as f:
-            self.corpus = json.load(f)
+            wiki = pd.read_json(f).T
+        self.corpus = wiki['text'].unique()
         self.pickle_path = pickle_path
         self.tokenize_fn = tokenize_fn
 
