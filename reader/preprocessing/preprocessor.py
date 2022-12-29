@@ -38,11 +38,11 @@ class ExtractionProcessor():
         self.position = config["position"]
         
         self.train_dataset = self.train_data.map(
-           self.prepare_train_features,
-           batched=True,
-           num_proc=config["num_proc"],
-           remove_columns=self.column_names,
-           load_from_cache_file=True, 
+            self.prepare_train_features,
+            batched=True,
+            num_proc=config["num_proc"],
+            remove_columns=self.column_names,
+            load_from_cache_file=True, 
         )
         
         self.eval_examples = self.eval_data

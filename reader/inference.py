@@ -28,7 +28,7 @@ if __name__ == "__main__":
     
     ## Store n_best_answer
     store = [[] for _ in range(len(data))]
- 
+
     ## Load Model
     model_selection = ModelSelection(config)
     model = model_selection.get_model()
@@ -65,7 +65,7 @@ if __name__ == "__main__":
             output = model(
                 input_ids=tokenized_data["input_ids"].to(device),
                 attention_mask=tokenized_data["attention_mask"].to(device),
-                token_type_ids=token_type_ids.to(device),
+                token_type_ids=token_type_ids.to(device) if "roberta" not in config["model_name"] else token_type_ids,
                 )
 
         start_logits = output["start_logits"][0]
