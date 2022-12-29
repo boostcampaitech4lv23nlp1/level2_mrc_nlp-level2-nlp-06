@@ -43,9 +43,13 @@ p_encoder_load_path: "/opt/ml/saved_retriever_model/passage/passage-dataset-ours
 
 ### Data path ###
 
+# Setting
+use_multiple_datasets: False
+
 # Text data
 corpus_path: "path to import wiki corpus"
 train_data_path: "path to import the training (and validation) dataset"
+augmented_train_data_path: "path to import the training dataset with multiple sources. If use_multiple_datasets is False, then this value is not used."
 test_data_path: "path to import the test dataset"
 
 # Features
