@@ -7,7 +7,7 @@ import pandas as pd
 
 def main():
     corpus_path = "../../../ODQA/data/wikipedia_documents.json"
-    pickle_path = "tf-idf_bert-base.pickle"
+    pickle_path = "tf-idf_wiki.pickle"
     tokenizer_name = "klue/bert-base"
     validation_path = "../../../ODQA/data/train_dataset"
     result_path = "tf-idf_valid_result.csv"
@@ -38,12 +38,12 @@ def main():
     
     for i, result in enumerate(docs):
         for doc in result:
-            df_dict["question_id"].append(valid_data["question_id"][i])
+            df_dict["question_id"].append(i)
             df_dict["question"].append(valid_data["question"][i])
             df_dict["subdocument"].append(doc)
             
     df = pd.DataFrame.from_dict(df_dict)
-    df.to_csv(result_path)
+    df.to_csv(result_path, index=False)
     
     
 if __name__=="__main__":
