@@ -1,23 +1,24 @@
+import torch
 import torch.nn as nn
 from transformers import AutoModel
 from torch.nn import CrossEntropyLoss
 from transformers.modeling_outputs import QuestionAnsweringModelOutput
 
-class TransformerModel(nn.Module):
-    def __init__(self,arg,config):
-        super(TransformerModel,self).__init__()
+class ExtractionModel(nn.Module):
+    def __init__(self, arg, config):
+        super(ExtractionModel, self).__init__()
         self.arg = arg
-        self.transformer = AutoModel.from_pretrained(arg["model_name"], config = config)
+        self.transformer = AutoModel.from_pretrained(self.arg["model_name"], config=config)
         self.h_dim = self.transformer.config.hidden_size
         self.qa_outputs = nn.Linear(self.h_dim,2)
-
 
     def forward(self,
         input_ids,
         attention_mask,
-        token_type_ids,
+        token_type_ids = None,
         start_positions = None,
         end_positions = None,
+        labels = None,
     ):
         outputs = self.transformer(
             input_ids = input_ids,
@@ -27,7 +28,7 @@ class TransformerModel(nn.Module):
         )
 
         sequence_output = outputs[0]
-
+        
         logits = self.qa_outputs(sequence_output)
         start_logits, end_logits = logits.split(1, dim=-1)
         start_logits = start_logits.squeeze(-1).contiguous()
@@ -49,7 +50,7 @@ class TransformerModel(nn.Module):
             start_loss = loss_fct(start_logits, start_positions)
             end_loss = loss_fct(end_logits, end_positions)
             total_loss = (start_loss + end_loss) / 2
-
+        
         return QuestionAnsweringModelOutput(
             loss=total_loss,
             start_logits=start_logits,
@@ -57,3 +58,8 @@ class TransformerModel(nn.Module):
             hidden_states=outputs.hidden_states,
             attentions=outputs.attentions,
         )
+    
+    
+class GenerationModel(nn.Module):
+    def __init__(self, config, model_config):
+        pass

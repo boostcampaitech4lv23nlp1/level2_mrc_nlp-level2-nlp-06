@@ -1,53 +1,31 @@
 # coding=utf-8
 # Copyright 2020 The HuggingFace Team All rights reserved.
 #
-# Licensed under the Apache License, Version 2.0 (the 'License');
+# Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
 #     http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an 'AS IS' BASIS,
+# distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Pre-processing
 Post-processing utilities for question answering.
 """
 import collections
 import json
 import logging
 import os
-import random
-from typing import Any, Optional, Tuple
+from typing import Optional, Tuple
 
 import numpy as np
-import torch
-from datasets import DatasetDict
 from tqdm.auto import tqdm
-from transformers import PreTrainedTokenizerFast, TrainingArguments, is_torch_available
-from transformers.trainer_utils import get_last_checkpoint
+
 
 logger = logging.getLogger(__name__)
-
-
-def set_seed(seed: int = 42):
-    """
-    seed 고정하는 함수 (random, numpy, torch)
-
-    Args:
-        seed (:obj:`int`): The seed to set.
-    """
-    random.seed(seed)
-    np.random.seed(seed)
-    if is_torch_available():
-        torch.manual_seed(seed)
-        torch.cuda.manual_seed(seed)
-        torch.cuda.manual_seed_all(seed)  # if use multi-GPU
-        torch.backends.cudnn.deterministic = True
-        torch.backends.cudnn.benchmark = False
 
 
 def postprocess_qa_predictions(
@@ -97,23 +75,23 @@ def postprocess_qa_predictions(
         len(predictions) == 2
     ), "`predictions` should be a tuple with two elements (start_logits, end_logits)."
     all_start_logits, all_end_logits = predictions
-
+    
     assert len(predictions[0]) == len(
         features
     ), f"Got {len(predictions[0])} predictions and {len(features)} features."
-
+    
     # example과 mapping되는 feature 생성
     example_id_to_index = {k: i for i, k in enumerate(examples["id"])}
     features_per_example = collections.defaultdict(list)
     for i, feature in enumerate(features):
         features_per_example[example_id_to_index[feature["example_id"]]].append(i)
-
+    
     # prediction, nbest에 해당하는 OrderedDict 생성합니다.
     all_predictions = collections.OrderedDict()
     all_nbest_json = collections.OrderedDict()
     if version_2_with_negative:
         scores_diff_json = collections.OrderedDict()
-
+    
     # Logging.
     logger.setLevel(logging.INFO if is_world_process_zero else logging.WARN)
     logger.info(
@@ -127,7 +105,7 @@ def postprocess_qa_predictions(
 
         min_null_prediction = None
         prelim_predictions = []
-
+        
         # 현재 example에 대한 모든 feature 생성합니다.
         for feature_index in feature_indices:
             # 각 featureure에 대한 모든 prediction을 가져옵니다.
@@ -139,7 +117,7 @@ def postprocess_qa_predictions(
             token_is_max_context = features[feature_index].get(
                 "token_is_max_context", None
             )
-
+            
             # minimum null prediction을 업데이트 합니다.
             feature_null_score = start_logits[0] + end_logits[0]
             if (
@@ -157,9 +135,9 @@ def postprocess_qa_predictions(
             start_indexes = np.argsort(start_logits)[
                 -1 : -n_best_size - 1 : -1
             ].tolist()
-
+            
             end_indexes = np.argsort(end_logits)[-1 : -n_best_size - 1 : -1].tolist()
-
+            
             for start_index in start_indexes:
                 for end_index in end_indexes:
                     # out-of-scope answers는 고려하지 않습니다.
@@ -308,48 +286,14 @@ def postprocess_qa_predictions(
 
     return all_predictions
 
+def generarate_answer(sample):
+    inputs = f'question: {sample["question"]}  context: {sample["context"]} </s>'
+    print(inputs)
+    sample = tokenizer(inputs, max_length=max_source_length, padding=padding, truncation=True, return_tensors='pt')
+    sample = sample.to("cuda:0")
+    outputs = model.generate(**sample, max_length=max_target_length, num_beams=num_beams)
+    pred = tokenizer.decode(outputs[0], skip_special_tokens=True)
 
-def check_no_error(
-    args,
-    training_args: TrainingArguments,
-    datasets: DatasetDict,
-    tokenizer,
-) -> Tuple[Any, int]:
+    pred = "\n".join(nltk.sent_tokenize(pred))
 
-    # last checkpoint 찾기.
-    last_checkpoint = None
-    if (
-        os.path.isdir(training_args.output_dir)
-        and training_args.do_train
-        and not training_args.overwrite_output_dir
-    ):
-        last_checkpoint = get_last_checkpoint(training_args.output_dir)
-        if last_checkpoint is None and len(os.listdir(training_args.output_dir)) > 0:
-            raise ValueError(
-                f"Output directory ({training_args.output_dir}) already exists and is not empty. "
-                "Use --overwrite_output_dir to overcome."
-            )
-        elif last_checkpoint is not None:
-            logger.info(
-                f"Checkpoint detected, resuming training at {last_checkpoint}. To avoid this behavior, change "
-                "the `--output_dir` or add `--overwrite_output_dir` to train from scratch."
-            )
-
-    # Tokenizer check: 해당 script는 Fast tokenizer를 필요로합니다.
-    if not isinstance(tokenizer, PreTrainedTokenizerFast):
-        raise ValueError(
-            "This example script only works for models that have a fast tokenizer. Checkout the big table of models "
-            "at https://huggingface.co/transformers/index.html#bigtable to find the model types that meet this "
-            "requirement"
-        )
-
-    if args['max_seq_length'] > tokenizer.model_max_length:
-        logger.warn(
-            f"The max_seq_length passed ({args['max_seq_length']}) is larger than the maximum length for the"
-            f"model ({tokenizer.model_max_length}). Using max_seq_length={tokenizer.model_max_length}."
-        )
-    max_seq_length = min(args['max_seq_length'], tokenizer.model_max_length)
-
-    if "validation" not in datasets:
-        raise ValueError("--do_eval requires a validation dataset")
-    return last_checkpoint, max_seq_length
+    return pred

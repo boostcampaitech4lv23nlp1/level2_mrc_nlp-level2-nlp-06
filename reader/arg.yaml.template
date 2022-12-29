@@ -1,33 +1,32 @@
-#model argument
+## 1. First consideration
 model_name: "klue/bert-base"
-model_path: './result/baseline'             #model을 불러올 경우 설정, 아닐경우 null
-config_name: null
-tokenizer_name: null
+model_save_path: "./save/model1.pt"
+train_type: 0                        ## {0: Extraction Based, 1: Generation Based}
+train_data_path: "/opt/ml/input/data/train_dataset"
+dataset: "squad_kor_v1"
+output_dir: "./outputs"
 
-#data argument
-dataset_name: "../../input/data/train_dataset"
-overwrite_cache: False
-preprocessing_num_workers: null
-max_seq_length: 384
-pad_to_max_length: False
-doc_stride: 128
+## 2. Hyper-Parameters
+epoch: 2
+lr: 3.0e-5
+n_best_size: 20
 max_answer_length: 30
-
-#trainer argument
-do_train: True
-do_eval: True
-checkpoint_dir: './result/baseline'
-save_steps: 500
-num_train_epochs: 2
-learning_rate: 5.0e-5
+weight_decay: 0.01
 batch_size: 8
-warmup_steps: 0
-weight_decay: 0.0
-eval_steps: 500
-overwrite_output_dir: True        #False면 checkpoint_dir에 파일이 존재할 경우 에러가 발생하며 멈춤
+warmup_steps: 200
+mx_token_length: 512
+stride: 128
+max_target_length: 30
+num_beams: 2
+position: True                       ## {True: question first, False: context first}
+num_proc: 4
+null_score_diff_threshold: 0.01
+num_sample: -1
 
-#wandb argument
-wandb_project: 'huggingface'
-wandb_name: 'baseline_test'
-wandb_note: 'test'
-wandb_group: null
+
+## 0. Wandb setting
+wandb_project: ""
+wandb_name: ""
+wandb_group: ""
+wandb_note: ""
+
