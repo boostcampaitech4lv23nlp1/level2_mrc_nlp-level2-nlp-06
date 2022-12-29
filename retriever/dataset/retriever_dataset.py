@@ -125,7 +125,7 @@ class AugmentedRetrieverDataset(Dataset):
     def __init__(self, config):
         super(AugmentedRetrieverDataset, self).__init__()
         self.config = config
-        self.dataset = load_from_disk(config["augmented_train_data_path"])
+        self.dataset = load_from_disk(config["augmented_train_data_path"])["train"]
         self.tokenizer = AutoTokenizer.from_pretrained(config["model_name_or_path"])
         self.max_length = self.config["max_length"]
         self.stride = self.config["stride"]
