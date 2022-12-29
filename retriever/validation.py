@@ -102,7 +102,14 @@ def main(config):
         "document_id": [],
         "subdocument_id": [],
     }
-    for question_index in range(len(valid_dataset.dataset)):
+    real_question_index = -1
+    before_question = None
+
+    for question_index in range(len(topk_indices)):
+        question = tokenizer.decode(valid_dataset[question_index][3], skip_special_tokens=True)
+        if question != before_question:
+            real_question_index += 1
+        before_question = question
         for topk_index in topk_indices[question_index]:
             token_start_index = 0
             while wiki_dataset.contexts["offset_mapping"][topk_index][token_start_index].sum() == 0:
@@ -112,15 +119,18 @@ def main(config):
                 token_end_index -= 1
             token_start_index = wiki_dataset.contexts["offset_mapping"][topk_index][token_start_index][0]
             token_end_index = wiki_dataset.contexts["offset_mapping"][topk_index][token_end_index][1]
-            result["question"].append(valid_dataset.dataset[question_index]["question"])
-            result["question_id"].append(question_index)
-            result["answer_document"].append(valid_dataset.dataset[question_index]["context"])
+            
+            # 중복된 질문을 해결하기 위한 코드
+            result["question"].append(valid_dataset.dataset[real_question_index]["question"])
+            result["question_id"].append(real_question_index)
+            
+            result["answer_document"].append(valid_dataset.dataset[real_question_index]["context"])
             result["document_id"].append(
                 wiki_dataset.contexts["overflow_to_sample_mapping"][topk_index].item()
             )
             result["subdocument"].append(wiki_dataset.corpus[result["document_id"][-1]][token_start_index:token_end_index + 1])
             result["subdocument_id"].append(topk_index.item())
-    pd.DataFrame.from_dict(result).to_csv(config["validation_result_path"])
+    pd.DataFrame.from_dict(result).to_csv("test.csv")
 
 
 def calc_wiki_accuracy(pred_context, label_context, indexes, k):
