@@ -123,7 +123,7 @@ def main(config):
             )
             result["subdocument"].append(wiki_dataset.corpus[result["document_id"][-1]][token_start_index:token_end_index + 1])
             result["subdocument_id"].append(topk_index.item())
-            result["similarity_score"].append(scores[question_index][topk_index])
+            result["similarity_score"].append(scores[question_index][topk_index].item())
     pd.DataFrame.from_dict(result).to_csv(config["validation_result_path"])
 
 
