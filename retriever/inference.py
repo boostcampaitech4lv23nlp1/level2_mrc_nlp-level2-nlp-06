@@ -82,15 +82,26 @@ def main(config):
         topk_scores.append(topk_result.values)
 
     ### Save the pairs of question and top-k subdocuments ###
+    save_topk_file(test_dataset, wiki_dataset, tokenizer, 5, topk_indices, scores)
+    save_topk_file(test_dataset, wiki_dataset, tokenizer, 10, topk_indices, scores)
+    save_topk_file(test_dataset, wiki_dataset, tokenizer, 20, topk_indices, scores)
+    save_topk_file(test_dataset, wiki_dataset, tokenizer, 30, topk_indices, scores)
+    save_topk_file(test_dataset, wiki_dataset, tokenizer, 40, topk_indices, scores)
+    save_topk_file(test_dataset, wiki_dataset, tokenizer, 50, topk_indices, scores)
+    save_topk_file(test_dataset, wiki_dataset, tokenizer, 100, topk_indices, scores)
+
+
+def save_topk_file(test_dataset, wiki_dataset, tokenizer, topk, topk_indices, scores):
     result = {
         "question": [],
         "subdocument": [],
         "question_id": [],
         "document_id": [],
         "subdocument_id": [],
+        "similarity_score": []
     }
     for question_index in range(len(test_dataset)):
-        for topk_index in topk_indices[question_index]:
+        for topk_index in topk_indices[question_index][:topk]:
             token_start_index = 0
             while wiki_dataset.contexts["offset_mapping"][topk_index][token_start_index].sum() == 0:
                 token_start_index += 1
