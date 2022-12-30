@@ -4,12 +4,11 @@ import torch
 import pickle
 import argparse
 import pandas as pd
-from tqdm import tqdm
 from utils import TOPK
 from model import DenseRetriever
+from dataset import RetrieverDataset
 from transformers import AutoTokenizer
 from torch.utils.data import DataLoader
-from dataset import RetrieverDataset, WikiDataset
 
 
 def main(config):
@@ -62,10 +61,10 @@ def main(config):
         topk_scores.append(topk_result.values)
 
     ### Save the pairs of question and top-k subdocuments ###
-    save_topk_file(test_dataset, wiki_dataset, tokenizer, 100, topk_indices, scores)
+    save_topk_file(test_dataset, wiki_dataset, 100, topk_indices, scores)
 
 
-def save_topk_file(test_dataset, wiki_dataset, tokenizer, topk, topk_indices, scores):
+def save_topk_file(test_dataset, wiki_dataset, topk, topk_indices, scores):
     result = {
         "question": [],
         "subdocument": [],
