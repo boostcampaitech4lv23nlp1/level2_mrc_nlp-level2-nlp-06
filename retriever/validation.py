@@ -116,8 +116,6 @@ def save_topk_file(valid_dataset, wiki_dataset, tokenizer, topk, topk_indices, s
         "answer_document":[],
         "answer_document_id": [],
         "answer_text": [],
-        "answer_start": [],
-        "answer_end": [],
         "subdocument": [],
         "question_id": [],
         "document_id": [],
@@ -153,14 +151,8 @@ def save_topk_file(valid_dataset, wiki_dataset, tokenizer, topk, topk_indices, s
                 wiki_dataset.contexts["overflow_to_sample_mapping"][topk_index].item()
             )
             result["answer_text"].append(valid_dataset.dataset[real_question_index]["answers"]["text"][0])
-            if result["answer_document_id"][-1] == result["document_id"][-1]:
-                result["answer_start"].append(valid_dataset.answers[question_index]["answer_start"][0])
-                result["answer_end"].append(result["answer_start"][-1] + len(result["answer_text"][-1]))
-            else:
-                result["answer_start"].append(None)
-                result["answer_end"].append(None)
 
-            result["subdocument"].append(wiki_dataset.corpus[result["document_id"][-1]][token_start_index:token_end_index + 1].replace("\\n", ""))
+            result["subdocument"].append(wiki_dataset.corpus[result["document_id"][-1]][token_start_index:token_end_index + 1].replace("\n", ""))
             result["subdocument_id"].append(topk_index.item())
             result["similarity_score"].append(scores[question_index][topk_index].item())
     pd.DataFrame.from_dict(result).to_csv(f"{config['validation_result_path'][:-4]}-{topk}.csv")
