@@ -74,20 +74,27 @@ class RetrieverDataset(Dataset):
 
     def __getitem__(self, index):
         if self.mode in ["train", "validation"]:
-            return (
+            items = [
                 self.tokenized_passages["input_ids"][index],
                 self.tokenized_passages["attention_mask"][index],
                 self.tokenized_passages["token_type_ids"][index],
                 self.tokenized_questions["input_ids"][index],
                 self.tokenized_questions["attention_mask"][index],
                 self.tokenized_questions["token_type_ids"][index],
-            )
+            ]
+            if self.config["hard_negative_nums"] > 0 and self.mode == "train":
+                items += [
+                    self.tokenized_hard_negatives['input_ids'][index],
+                    self.tokenized_hard_negatives['attention_mask'][index],
+                    self.tokenized_hard_negatives['token_type_ids'][index]
+                ]
         elif self.mode == "test":
-            return (
+            items = [
                 self.tokenized_questions["input_ids"][index],
                 self.tokenized_questions["attention_mask"][index],
                 self.tokenized_questions["token_type_ids"][index],
-            )
+            ]
+        return items
 
     def __len__(self):
         if self.mode in ["train", "validation"]:
