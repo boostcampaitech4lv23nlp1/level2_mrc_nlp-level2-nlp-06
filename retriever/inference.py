@@ -115,9 +115,10 @@ def save_topk_file(test_dataset, wiki_dataset, tokenizer, topk, topk_indices, sc
             result["document_id"].append(
                 wiki_dataset.contexts["overflow_to_sample_mapping"][topk_index].item()
             )
-            result["subdocument"].append(wiki_dataset.corpus[result["document_id"][-1]][token_start_index:token_end_index + 1])
+            result["subdocument"].append(wiki_dataset.corpus[result["document_id"][-1]].replace("\n", "")[token_start_index:token_end_index + 1])
             result["subdocument_id"].append(topk_index.item())
-    pd.DataFrame.from_dict(result).to_csv(config["inference_result_path"])
+            result["similarity_score"].append(scores[question_index][topk_index].item())
+    pd.DataFrame.from_dict(result).to_csv(f"{config['inference_result_path'][:-4]}-{topk}.csv")
 
 
 if __name__ == "__main__":
