@@ -42,20 +42,34 @@ class TOPK:
         
         return p_outputs
         
-    def get_results(self, p_encoder, dataloader, p_outputs, ks):
-        q_outputs = []
-        label_outputs = []
-        for data in dataloader:
-            with torch.no_grad():
-                data = [d.to(self.config["device"]) for d in data]
-                label_output = p_encoder(data[0], data[1], data[2])
-                question_output = p_encoder(data[3], data[4], data[5])
-            q_outputs.append(question_output.cpu())
-            label_outputs.append(label_output.cpu())
-        q_outputs = torch.cat(q_outputs, dim=0)
-        label_outputs = torch.cat(label_outputs, dim=0)
-        
-        scores = torch.matmul(q_outputs, p_outputs.T)
+    def get_results(self, p_encoder, dataloader, p_outputs, mode="train"):
+        if mode == "test":
+            q_outputs = []
+            for data in dataloader:
+                with torch.no_grad():
+                    data = [d.to(self.config["device"]) for d in data]
+                    question_output = p_encoder(data[0], data[1], data[2])
+                q_outputs.append(question_output.cpu())
+            q_outputs = torch.cat(q_outputs, dim=0)
+            return q_outputs
+        else:
+            q_outputs = []
+            label_outputs = []
+            for data in dataloader:
+                with torch.no_grad():
+                    data = [d.to(self.config["device"]) for d in data]
+                    label_output = p_encoder(data[0], data[1], data[2])
+                    question_output = p_encoder(data[3], data[4], data[5])
+                q_outputs.append(question_output.cpu())
+                label_outputs.append(label_output.cpu())
+            q_outputs = torch.cat(q_outputs, dim=0)
+            label_outputs = torch.cat(label_outputs, dim=0)
+            
+            scores = torch.matmul(q_outputs, p_outputs.T)
+            
+            return scores, label_outputs
+    
+    def get_topk_results(self, p_outputs, scores, label_outputs, ks):
         topk_indices = []
         for score in scores:
             topk_res = torch.topk(score, 100)
