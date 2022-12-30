@@ -87,17 +87,37 @@ def main(config):
         topk_scores.append(topk_res.values)
 
     top5 = calc_wiki_accuracy(p_outputs, label_outputs, topk_indices, 5)
+    top10 = calc_wiki_accuracy(p_outputs, label_outputs, topk_indices, 10)
     top20 = calc_wiki_accuracy(p_outputs, label_outputs, topk_indices, 20)
+    top30 = calc_wiki_accuracy(p_outputs, label_outputs, topk_indices, 30)
+    top40 = calc_wiki_accuracy(p_outputs, label_outputs, topk_indices, 40)
+    top50 = calc_wiki_accuracy(p_outputs, label_outputs, topk_indices, 50)
     top100 = calc_wiki_accuracy(p_outputs, label_outputs, topk_indices, 100)
     print("top-5 result :", top5)
+    print("top-10 result :", top10)
     print("top-20 result :", top20)
+    print("top-30 result :", top30)
+    print("top-40 result :", top40)
+    print("top-50 result :", top50)
     print("top-100 result :", top100)
 
     ### Save the pairs of question and top-k subdocuments ###
+    save_topk_file(valid_dataset, wiki_dataset, tokenizer, 5, topk_indices, scores)
+    save_topk_file(valid_dataset, wiki_dataset, tokenizer, 10, topk_indices, scores)
+    save_topk_file(valid_dataset, wiki_dataset, tokenizer, 20, topk_indices, scores)
+    save_topk_file(valid_dataset, wiki_dataset, tokenizer, 30, topk_indices, scores)
+    save_topk_file(valid_dataset, wiki_dataset, tokenizer, 40, topk_indices, scores)
+    save_topk_file(valid_dataset, wiki_dataset, tokenizer, 50, topk_indices, scores)
+    save_topk_file(valid_dataset, wiki_dataset, tokenizer, 100, topk_indices, scores)
+
+def save_topk_file(valid_dataset, wiki_dataset, tokenizer, topk, topk_indices, scores):
     result = {
         "question": [],
         "answer_document":[],
         "answer_document_id": [],
+        "answer_text": [],
+        "answer_start": [],
+        "answer_end": [],
         "subdocument": [],
         "question_id": [],
         "document_id": [],
@@ -106,13 +126,15 @@ def main(config):
     }
     real_question_index = -1
     before_question = None
-
     for question_index in range(len(topk_indices)):
         question = tokenizer.decode(valid_dataset[question_index][3], skip_special_tokens=True)
         if question != before_question:
             real_question_index += 1
+        else:
+            continue
         before_question = question
-        for topk_index in topk_indices[question_index]:
+
+        for topk_index in topk_indices[question_index][:topk]:
             token_start_index = 0
             while wiki_dataset.contexts["offset_mapping"][topk_index][token_start_index].sum() == 0:
                 token_start_index += 1
@@ -121,19 +143,27 @@ def main(config):
                 token_end_index -= 1
             token_start_index = wiki_dataset.contexts["offset_mapping"][topk_index][token_start_index][0]
             token_end_index = wiki_dataset.contexts["offset_mapping"][topk_index][token_end_index][1]
-            
-            # 중복된 질문을 해결하기 위한 코드
+
             result["question"].append(valid_dataset.dataset[real_question_index]["question"])
             result["question_id"].append(real_question_index)
-            
-            result["answer_document"].append(valid_dataset.dataset[real_question_index]["context"])
+            result["answer_document_id"].append(valid_dataset.dataset[real_question_index]["document_id"])
+            result["answer_document"].append(valid_dataset.dataset[real_question_index]["context"].replace("\\n", ""))
+
             result["document_id"].append(
                 wiki_dataset.contexts["overflow_to_sample_mapping"][topk_index].item()
             )
-            result["subdocument"].append(wiki_dataset.corpus[result["document_id"][-1]][token_start_index:token_end_index + 1])
+            result["answer_text"].append(valid_dataset.dataset[real_question_index]["answers"]["text"][0])
+            if result["answer_document_id"][-1] == result["document_id"][-1]:
+                result["answer_start"].append(valid_dataset.answers[question_index]["answer_start"][0])
+                result["answer_end"].append(result["answer_start"][-1] + len(result["answer_text"][-1]))
+            else:
+                result["answer_start"].append(None)
+                result["answer_end"].append(None)
+
+            result["subdocument"].append(wiki_dataset.corpus[result["document_id"][-1]][token_start_index:token_end_index + 1].replace("\\n", ""))
             result["subdocument_id"].append(topk_index.item())
             result["similarity_score"].append(scores[question_index][topk_index].item())
-    pd.DataFrame.from_dict(result).to_csv(config["validation_result_path"])
+    pd.DataFrame.from_dict(result).to_csv(f"{config['validation_result_path'][:-4]}-{topk}.csv")
 
 
 def calc_wiki_accuracy(pred_context, label_context, indexes, k):
