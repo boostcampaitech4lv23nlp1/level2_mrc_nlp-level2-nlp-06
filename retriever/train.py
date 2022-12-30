@@ -11,7 +11,7 @@ from model import DenseRetriever
 from torch.utils.data import DataLoader
 from transformers import TrainingArguments, get_linear_schedule_with_warmup
 from dataset import RetrieverDataset, WikiDataset, AugmentedRetrieverDataset
-        
+
 
 class RetrieverTrainer:
     def __init__(self, config):
@@ -119,8 +119,9 @@ class RetrieverTrainer:
             wandb.log({"valid_loss_per_epoch": valid_loss})
 
             print("\n*** CHECKING THE TRAIN & VALIDATION ACCURACY ***\n")
-            train_top5, train_top20, train_top100, _, _ = self.topk.get_results(self.p_encoder, epoch, train_dataloader, True)
-            valid_top5, valid_top20, valid_top100, _, _ = self.topk.get_results(self.p_encoder, epoch, valid_dataloader, False)
+            p_outputs = self.topk.get_passage_outputs(self.p_encoder, epoch)
+            [train_top5, train_top20, train_top100], _, _ = self.topk.get_results(self.p_encoder, train_dataloader, p_outputs, [5, 20, 100])
+            [valid_top5, valid_top20, valid_top100], _, _ = self.topk.get_results(self.p_encoder, valid_dataloader, p_outputs, [5, 20, 100])
             wandb.log({
                 "train_top5 accuracy" : train_top5,
                 "train_top20 accuracy" : train_top20,
