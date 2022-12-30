@@ -23,7 +23,7 @@ class TOPK:
         self.p_outputs = None
         self.config = config
         
-    def get_results(self, p_encoder, epoch, dataloader, inference=True):
+    def get_passage_outputs(self, p_encoder, epoch, inference=True):
         p_encoder.eval()
         if inference:
             p_outputs = []
@@ -43,6 +43,9 @@ class TOPK:
         else:
             p_outputs = self.p_outputs
             
+        return p_outputs
+        
+    def get_results(self, p_encoder, dataloader, p_outputs, ks):
         q_outputs = []
         label_outputs = []
         for data in dataloader:
@@ -60,11 +63,12 @@ class TOPK:
         for score in scores:
             topk_res = torch.topk(score, 100)
             topk_indices.append(topk_res.indices)
-        top5 = self.calc_wiki_accuracy(p_outputs, label_outputs, topk_indices, 5)
-        top20 = self.calc_wiki_accuracy(p_outputs, label_outputs, topk_indices, 20)
-        top100 = self.calc_wiki_accuracy(p_outputs, label_outputs, topk_indices, 100)
+        top_k_results = []
+        for k in ks:
+            top_k = self.calc_wiki_accuracy(p_outputs, label_outputs, topk_indices, k)
+            top_k_results.append(top_k)
         
-        return top5, top20, top100, topk_indices, scores
+        return top_k_results, topk_indices, scores
         
     def calc_wiki_accuracy(self, pred_context, label_context, indexes, k):
         correct = 0
