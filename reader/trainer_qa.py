@@ -60,13 +60,20 @@ class QuestionAnsweringTrainer(Trainer):
                 type=eval_dataset.format["type"],
                 columns=list(eval_dataset.features.keys()),
             )
-        
         if self.post_process_function is not None and self.compute_metrics is not None:
             eval_preds = self.post_process_function(
                 eval_examples, eval_dataset, output.predictions
             )
             metrics = self.compute_metrics(eval_preds)
+            
+            print('metrics',metrics)
 
+            ##eval_loss calculation
+            for key in list(metrics.keys()):
+                if not key.startswith(f"{metric_key_prefix}_"):
+                    metrics[f"{metric_key_prefix}_{key}"] = metrics.pop(key)
+            metrics[f"{metric_key_prefix}_loss"] = output.metrics["eval_loss"]            
+                 
             self.log(metrics)
         else:
             metrics = {}
