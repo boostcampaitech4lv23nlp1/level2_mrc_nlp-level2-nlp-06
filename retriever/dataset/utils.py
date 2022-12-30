@@ -69,7 +69,7 @@ class Preprocess_features:
                 tokenized_contexts["questions"].append(train_dataset["question"][example_index])
                 tokenized_contexts["answers"].append({
                     "text": train_dataset["answers"][example_index]["text"],
-                    "answer_start": answer_start_offset - subdocument_start_index
+                    "answer_start": [answer_start_offset - subdocument_start_index]
                 })
 
         return tokenized_contexts
