@@ -4,12 +4,12 @@ import torch
 import pickle
 import argparse
 import pandas as pd
-from tqdm import tqdm
 from utils import TOPK
 from model import DenseRetriever
+from dataset import RetrieverDataset
 from transformers import AutoTokenizer
 from torch.utils.data import DataLoader
-from dataset import RetrieverDataset, WikiDataset
+
 
 
 def main(config):
