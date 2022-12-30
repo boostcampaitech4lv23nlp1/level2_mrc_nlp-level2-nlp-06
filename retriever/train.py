@@ -2,19 +2,15 @@ import os
 import yaml
 import torch
 import wandb
-import random
-import pickle
 import argparse
-import numpy as np
-import pandas as pd
 from tqdm import tqdm
 from torch.optim import AdamW
 import torch.nn.functional as F
 from utils import TOPK, set_seed
 from model import DenseRetriever
 from torch.utils.data import DataLoader
+from transformers import TrainingArguments, get_linear_schedule_with_warmup
 from dataset import RetrieverDataset, WikiDataset, AugmentedRetrieverDataset
-from transformers import TrainingArguments, get_linear_schedule_with_warmup, AutoTokenizer
         
 
 class RetrieverTrainer:
