@@ -120,8 +120,10 @@ class RetrieverTrainer:
 
             print("\n*** CHECKING THE TRAIN & VALIDATION ACCURACY ***\n")
             p_outputs = self.topk.get_passage_outputs(self.p_encoder, epoch)
-            [train_top5, train_top20, train_top100], _, _ = self.topk.get_results(self.p_encoder, train_dataloader, p_outputs, [5, 20, 100])
-            [valid_top5, valid_top20, valid_top100], _, _ = self.topk.get_results(self.p_encoder, valid_dataloader, p_outputs, [5, 20, 100])
+            scores, label_outputs = self.topk.get_results(self.p_encoder, train_dataloader, p_outputs)
+            [train_top5, train_top20, train_top100], _ = self.topk.get_topk_results(p_outputs, scores, label_outputs, [5, 20, 100])
+            scores, label_outputs = self.topk.get_results(self.p_encoder, valid_dataloader, p_outputs)
+            [valid_top5, valid_top20, valid_top100], _ = self.topk.get_topk_results(p_outputs, scores, label_outputs, [5, 20, 100])
             wandb.log({
                 "train_top5 accuracy" : train_top5,
                 "train_top20 accuracy" : train_top20,
