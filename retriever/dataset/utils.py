@@ -4,7 +4,6 @@ class Preprocess_features:
         self.max_length = max_length
         self.stride = stride
 
-
     def process(self, train_dataset):
         offset_newline = [context[:train_dataset["answers"][i]["answer_start"][0]].count("\\n") for i, context in enumerate(train_dataset["context"])]
         contexts = [context.replace("\\n", "") for context in train_dataset["context"]]
@@ -19,7 +18,6 @@ class Preprocess_features:
             padding="max_length",
         )
 
-        overflow_to_sample_mapping = tokenized_contexts.pop("overflow_to_sample_mapping")
         offset_mapping = tokenized_contexts.pop("offset_mapping")
 
         tokenized_contexts["start_positions"] = []
@@ -32,7 +30,7 @@ class Preprocess_features:
 
             sequence_ids = tokenized_contexts.sequence_ids(i)
 
-            example_index = overflow_to_sample_mapping[i]
+            example_index = tokenized_contexts["overflow_to_sample_mapping"][i]
             answers = train_dataset["answers"][example_index]
 
             answer_start_offset = answers["answer_start"][0] - offset_newline[example_index] * 2
@@ -73,3 +71,38 @@ class Preprocess_features:
                 })
 
         return tokenized_contexts
+
+    def get_hard_negatives(self, dataset, tokenized_passages, hard_negative_nums):
+        '''
+        dataset: wiki train dataset
+        tokenized_passages: result of self.preprocess()
+        hard_negative_nums: number of hard negatives.
+        '''
+        hard_negatives = []
+
+        for i, question in enumerate(dataset['question']):
+            hard_negative = list(self.hn_df['hard_negative'][i*5:(i+1)*5])
+            hard_negative = hard_negative[:hard_negative_nums]
+            hard_negatives += hard_negative
+        hard_negatives = [n.replace("\\n", "").replace("\n", "") for n in hard_negatives]
+
+        tokenized_hard_negatives = self.tokenizer(
+            hard_negatives,
+            truncation=True,
+            max_length=self.max_length,
+            stride=self.stride,
+            return_overflowing_tokens=True,
+            return_offsets_mapping=True,
+            padding="max_length",
+        )
+
+        tokenized_hn = {'input_ids': [], 'token_type_ids': [], "attention_mask": []}
+
+        for i in tokenized_passages['overflow_to_sample_mapping']:
+            hn_index = tokenized_hard_negatives['overflow_to_sample_mapping'].index(i)
+            tokenized_hn['input_ids'] += tokenized_hard_negatives['input_ids'][hn_index:hn_index+hard_negative_nums]
+            tokenized_hn['token_type_ids'] += tokenized_hard_negatives['token_type_ids'][hn_index:hn_index+hard_negative_nums]
+            tokenized_hn['attention_mask'] += tokenized_hard_negatives['attention_mask'][hn_index:hn_index+hard_negative_nums]
+            
+        return tokenized_hn
+    
