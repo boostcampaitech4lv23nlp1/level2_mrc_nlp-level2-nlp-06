@@ -23,26 +23,23 @@ class TOPK:
         self.p_outputs = None
         self.config = config
         
-    def get_passage_outputs(self, p_encoder, epoch, inference=True):
+    def get_passage_outputs(self, p_encoder, epoch):
         p_encoder.eval()
-        if inference:
-            p_outputs = []
-            for data in tqdm(self.wiki_dataloader):
-                data = {k: v.to('cuda') for k, v in data.items()}
-                with torch.no_grad():
-                    p_output = p_encoder(**data)
-                p_outputs.append(p_output.cpu())
-            p_outputs = torch.cat(p_outputs, dim=0)
-            # Save corpus features.
-            if epoch != -1:
-                corpus_feature_paths = self.config["corpus_feature_path"].replace(".pickle", "")
-                corpus_feature_paths = corpus_feature_paths + str(epoch) + ".pickle"
-            with open(corpus_feature_paths, "wb") as f:
-                pickle.dump(p_outputs, f)
-            self.p_outputs = p_outputs
-        else:
-            p_outputs = self.p_outputs
-            
+        p_outputs = []
+        for data in tqdm(self.wiki_dataloader):
+            data = {k: v.to('cuda') for k, v in data.items()}
+            with torch.no_grad():
+                p_output = p_encoder(**data)
+            p_outputs.append(p_output.cpu())
+        p_outputs = torch.cat(p_outputs, dim=0)
+        # Save corpus features.
+        if epoch != -1:
+            corpus_feature_paths = self.config["corpus_feature_path"].replace(".pickle", "")
+            corpus_feature_paths = corpus_feature_paths + str(epoch) + ".pickle"
+        with open(corpus_feature_paths, "wb") as f:
+            pickle.dump(p_outputs, f)
+        self.p_outputs = p_outputs
+        
         return p_outputs
         
     def get_results(self, p_encoder, dataloader, p_outputs, ks):
