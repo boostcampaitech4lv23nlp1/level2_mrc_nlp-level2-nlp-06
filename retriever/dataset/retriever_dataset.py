@@ -86,9 +86,9 @@ class RetrieverDataset(Dataset):
             ]
             if self.config["hard_negative_nums"] > 0 and self.mode == "train":
                 items += [
-                    self.tokenized_hard_negatives['input_ids'][index],
-                    self.tokenized_hard_negatives['attention_mask'][index],
-                    self.tokenized_hard_negatives['token_type_ids'][index]
+                    torch.tensor(self.tokenized_hard_negatives['input_ids'][index]),
+                    torch.tensor(self.tokenized_hard_negatives['attention_mask'][index]),
+                    torch.tensor(self.tokenized_hard_negatives['token_type_ids'][index])
                 ]
         elif self.mode == "test":
             items = [
