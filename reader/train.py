@@ -59,16 +59,18 @@ if __name__ == "__main__":
             fp16=True,
             do_eval=True,
             do_train=True,
+            eval_steps=500,            
             logging_steps=100,
             logging_dir="./log",
             save_total_limit=2,
-            evaluation_strategy='no',
+            evaluation_strategy='steps',
             learning_rate=config["lr"],
             output_dir=config["output_dir"],
             num_train_epochs=config["epoch"],
             weight_decay=config["weight_decay"],
             per_device_eval_batch_size=config["batch_size"],
             per_device_train_batch_size=config["batch_size"],
+            label_names = ["start_positions", "end_positions"],
         )
         
         trainer = QuestionAnsweringTrainer(
@@ -106,7 +108,6 @@ if __name__ == "__main__":
         )
     
     train_result = trainer.train()
-    print(train_result)
     torch.save(model.state_dict(), config["model_save_path"])
     
     ## Evaluation

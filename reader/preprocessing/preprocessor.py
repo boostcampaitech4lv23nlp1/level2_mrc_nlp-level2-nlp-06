@@ -74,7 +74,12 @@ class ExtractionProcessor():
         # token의 캐릭터 단위 position를 찾을 수 있도록 offset mapping을 사용합니다.
         # start_positions과 end_positions을 찾는데 도움을 줄 수 있습니다.
         offset_mapping = tokenized_examples.pop("offset_mapping")
+        tokenized_examples = self.tokenized_examples_sttend_pos(tokenized_examples, overflow_to_sample_mapping, offset_mapping, examples)
         
+        return tokenized_examples
+    
+    #tokenized 결과가 eval_loss를 계산하기 위해 prepare_valid_loss에서도 사용되어야 하므로 재사용을 위해 함수로 분리했습니다
+    def tokenized_examples_sttend_pos(self, tokenized_examples, overflow_to_sample_mapping, offset_mapping, examples):
         # 정답지를 만들기 위한 리스트
         tokenized_examples["start_positions"] = []
         tokenized_examples["end_positions"] = []
@@ -140,6 +145,8 @@ class ExtractionProcessor():
         )
 
         sample_mapping = tokenized_examples.pop("overflow_to_sample_mapping")
+        offset_mapping = tokenized_examples['offset_mapping']
+        tokenized_examples = self.tokenized_examples_sttend_pos(tokenized_examples, sample_mapping, offset_mapping, examples)
 
         tokenized_examples["example_id"] = []
 
