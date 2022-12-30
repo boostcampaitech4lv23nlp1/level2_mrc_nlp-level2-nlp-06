@@ -13,13 +13,13 @@ from dataset import RetrieverDataset, WikiDataset
 
 def main(config):
     ### Load wikipedia documents ###
-    print(f"retriever > test.py > main: Preprocess wikipedia documents")
+    print(f"retriever > inference.py > main: Preprocess wikipedia documents")
     tokenizer = AutoTokenizer.from_pretrained(config["model_name_or_path"])
     wiki_dataset = WikiDataset(config, tokenizer)
     wiki_dataloader = DataLoader(wiki_dataset, batch_size=config["batch_size"])
 
     ### Load the trained passage and question encoder ###
-    print(f"retriever > test.py > main: Load the trained encoders")
+    print(f"retriever > inference.py > main: Load the trained encoders")
     p_encoder = DenseRetriever(config)
 
     p_encoder.load_state_dict(torch.load(config["p_encoder_load_path"]))
@@ -31,13 +31,13 @@ def main(config):
     ### Get the features of wikipedia documents ###
     if os.path.exists(config["corpus_feature_path"]):
         print(
-            f"retriever > test.py > main: Saved features file {config['corpus_feature_path']} is found."
+            f"retriever > inference.py > main: Saved features file {config['corpus_feature_path']} is found."
         )
         print("This does not inference again.")
         with open(config["corpus_feature_path"], "rb") as f:
             p_outputs = pickle.load(f)
     else:
-        print("retriever > test.py > main: Create the features of wikipedia documents")
+        print("retriever > inference.py > main: Create the features of wikipedia documents")
         p_outputs = []
         for data in tqdm(wiki_dataloader):
             data = {k: v.to("cuda") for k, v in data.items()}
@@ -48,7 +48,7 @@ def main(config):
             p_outputs, dim=0
         )  # Size: (number of subdocuments, dimension of hidden state)
         print(
-            f"retriever > test.py > main: Save features in {config['corpus_feature_path']}"
+            f"retriever > inference.py > main: Save features in {config['corpus_feature_path']}"
         )
         with open(config["corpus_feature_path"], "wb") as f:
             pickle.dump(p_outputs, f)
@@ -57,7 +57,7 @@ def main(config):
     test_dataset = RetrieverDataset(config, mode="test")
     test_dataloader = DataLoader(test_dataset, batch_size=config["batch_size"])
 
-    print(f"retriever > test.py > main: Preprocessing questions from {config['test_data_path']}")
+    print(f"retriever > inference.py > main: Preprocessing questions from {config['test_data_path']}")
     q_outputs = []
     for data in tqdm(test_dataloader):
         with torch.no_grad():
