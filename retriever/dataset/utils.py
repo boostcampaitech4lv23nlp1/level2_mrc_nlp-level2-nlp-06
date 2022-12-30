@@ -6,7 +6,9 @@ class Preprocess_features:
 
 
     def process(self, train_dataset):
-        contexts = [context.replace("\\n", "") for context in train_dataset["context"]]
+        offset_newline = [context[:train_dataset["answers"][i]["answer_start"][0]].count("\\n") for i, context in enumerate(train_dataset["context"])]
+        contexts = [context.replace("\\n", " ") for context in train_dataset["context"]]
+        
         tokenized_contexts = self.tokenizer(
             contexts,
             truncation=True,
@@ -33,7 +35,7 @@ class Preprocess_features:
             example_index = overflow_to_sample_mapping[i]
             answers = train_dataset["answers"][example_index]
 
-            answer_start_offset = answers["answer_start"][0]
+            answer_start_offset = answers["answer_start"][0] - offset_newline[example_index]
             answer_end_offset = answer_start_offset + len(answers["text"][0])
 
             token_start_index = 0
