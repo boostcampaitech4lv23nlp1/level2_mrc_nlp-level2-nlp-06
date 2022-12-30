@@ -50,6 +50,10 @@ class RetrieverDataset(Dataset):
                 self.tokenized_passages,
                 self.tokenized_questions,
             ) = self.construct_in_batch_negative_sampled_dataset()
+            
+            self.tokenized_hard_negatives = self.PE.get_hard_negatives(
+                self.dataset, self.tokenized_passages, config["hard_negative_nums"]
+            )
         elif mode == "validation":
             print(
                 "RetrieverDataset > __init__: You are currently in the VALIDATION process. It will construct in-batch negative samples."
