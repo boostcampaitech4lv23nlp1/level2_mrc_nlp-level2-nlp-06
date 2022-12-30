@@ -152,14 +152,18 @@ class RetrieverTrainer:
             train_loss = 0
             valid_loss = 0
             for batch in tqdm(train_dataloader):
+                batch_size = batch[0].shape[0]
                 self.p_encoder.train()
-                p_output, q_output, sim_scores = self.forward_step(batch)
+                _, q_output, sim_scores = self.forward_step(batch)
                 hn_output = self.p_encoder(
                     batch[6].to(self.args.device), 
                     batch[7].to(self.args.device), 
                     batch[8].to(self.args.device)
                 )
-                targets = torch.arange(0, batch[0].shape[0]).long()
+                del batch
+                torch.cuda.empty_cache()
+                
+                targets = torch.arange(0, batch_size).long()
                 targets = targets.to(self.args.device)
 
                 hn_scores = torch.diag(torch.matmul(hn_output, q_output.T))
