@@ -7,7 +7,7 @@ class Preprocess_features:
 
     def process(self, train_dataset):
         offset_newline = [context[:train_dataset["answers"][i]["answer_start"][0]].count("\\n") for i, context in enumerate(train_dataset["context"])]
-        contexts = [context.replace("\\n", " ") for context in train_dataset["context"]]
+        contexts = [context.replace("\\n", "") for context in train_dataset["context"]]
         
         tokenized_contexts = self.tokenizer(
             contexts,
@@ -35,7 +35,7 @@ class Preprocess_features:
             example_index = overflow_to_sample_mapping[i]
             answers = train_dataset["answers"][example_index]
 
-            answer_start_offset = answers["answer_start"][0] - offset_newline[example_index]
+            answer_start_offset = answers["answer_start"][0] - offset_newline[example_index] * 2
             answer_end_offset = answer_start_offset + len(answers["text"][0])
 
             token_start_index = 0
@@ -45,6 +45,8 @@ class Preprocess_features:
             token_end_index = len(input_ids) - 1
             while sequence_ids[token_end_index] != 0:
                 token_end_index -= 1
+            
+            subdocument_start_index = offsets[token_start_index][0]
 
             if not (
                 offsets[token_start_index][0] <= answer_start_offset
@@ -65,6 +67,9 @@ class Preprocess_features:
                 tokenized_contexts["start_positions"].append(token_start_index - 1)
                 tokenized_contexts["end_positions"].append(token_end_index + 1)
                 tokenized_contexts["questions"].append(train_dataset["question"][example_index])
-                tokenized_contexts["answers"].append(train_dataset["answers"][example_index])
+                tokenized_contexts["answers"].append({
+                    "text": train_dataset["answers"][example_index]["text"],
+                    "answer_start": answer_start_offset - subdocument_start_index
+                })
 
         return tokenized_contexts
