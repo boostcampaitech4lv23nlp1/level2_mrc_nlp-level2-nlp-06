@@ -24,6 +24,7 @@ weight_decay: 0.01
 learning_rate: 2.e-5
 warmup_ratio: 0.5
 epochs: 2
+hard_negative_nums: 1
 
 # Tokenizing
 max_length: 384
