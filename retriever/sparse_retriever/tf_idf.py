@@ -16,6 +16,7 @@ class TfIdfRetrieval:
         with open(corpus_path, "r") as f:
             wiki = pd.read_json(f).T
         self.corpus = wiki['text'].unique()
+        self.corpus = [c.replace("\n", "").replace("\\n", "") for c in self.corpus]
         self.pickle_path = pickle_path
         self.tokenize_fn = tokenize_fn
 

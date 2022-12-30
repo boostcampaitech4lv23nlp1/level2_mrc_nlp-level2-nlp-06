@@ -23,6 +23,7 @@ class BM25Retriever:
                 raise AssertionError("corpus경로는 .json이나 .csv 둘 중 하나여야 합니다")
 
         self.corpus = wiki['text'].unique()
+        self.corpus = [c.replace("\n", "").replace("\\n", "") for c in self.corpus]
         self.tokenize_fn = tokenize_fn
         print(f"Lengths of unique contexts : {len(self.corpus)}")
         self.bm25 = None
