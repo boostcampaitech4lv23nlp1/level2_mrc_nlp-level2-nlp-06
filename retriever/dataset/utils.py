@@ -72,16 +72,17 @@ class Preprocess_features:
 
         return tokenized_contexts
 
-    def get_hard_negatives(self, dataset, tokenized_passages, hard_negative_nums):
+    def get_hard_negatives(self, dataset, tokenized_passages, hard_negative_nums, hn_df):
         '''
-        dataset: wiki train dataset
-        tokenized_passages: result of self.preprocess()
-        hard_negative_nums: number of hard negatives.
+        dataset (datasets): wiki train dataset
+        tokenized_passages (datasets): result of self.preprocess()
+        hard_negative_nums (int): number of hard negatives.
+        hn_df (pd.DataFrame): DataFrame of hard negative csv file.
         '''
         hard_negatives = []
 
         for i, question in enumerate(dataset['question']):
-            hard_negative = list(self.hn_df['hard_negative'][i*5:(i+1)*5])
+            hard_negative = list(hn_df['hard_negative'][i*5:(i+1)*5])
             hard_negative = hard_negative[:hard_negative_nums]
             hard_negatives += hard_negative
         hard_negatives = [n.replace("\\n", "").replace("\n", "") for n in hard_negatives]

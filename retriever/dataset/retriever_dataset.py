@@ -51,8 +51,10 @@ class RetrieverDataset(Dataset):
                 self.tokenized_questions,
             ) = self.construct_in_batch_negative_sampled_dataset()
             
+            hn_df = pd.read_csv(config["hard_negative_df_path"])
+            
             self.tokenized_hard_negatives = self.PE.get_hard_negatives(
-                self.dataset, self.tokenized_passages, config["hard_negative_nums"]
+                self.dataset, self.tokenized_passages, config["hard_negative_nums"], hn_df
             )
         elif mode == "validation":
             print(
