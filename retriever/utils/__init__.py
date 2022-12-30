@@ -34,8 +34,9 @@ class TOPK:
                 p_outputs.append(p_output.cpu())
             p_outputs = torch.cat(p_outputs, dim=0)
             # Save corpus features.
-            corpus_feature_paths = self.config["corpus_feature_path"].replace(".pickle", "")
-            corpus_feature_paths = corpus_feature_paths + str(epoch) + ".pickle"
+            if epoch != -1:
+                corpus_feature_paths = self.config["corpus_feature_path"].replace(".pickle", "")
+                corpus_feature_paths = corpus_feature_paths + str(epoch) + ".pickle"
             with open(corpus_feature_paths, "wb") as f:
                 pickle.dump(p_outputs, f)
             self.p_outputs = p_outputs
