@@ -64,7 +64,7 @@ class TOPK:
         top20 = self.calc_wiki_accuracy(p_outputs, label_outputs, topk_indices, 20)
         top100 = self.calc_wiki_accuracy(p_outputs, label_outputs, topk_indices, 100)
         
-        return top5, top20, top100
+        return top5, top20, top100, topk_indices, scores
         
     def calc_wiki_accuracy(self, pred_context, label_context, indexes, k):
         correct = 0

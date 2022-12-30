@@ -119,8 +119,8 @@ class RetrieverTrainer:
             wandb.log({"valid_loss_per_epoch": valid_loss})
 
             print("\n*** CHECKING THE TRAIN & VALIDATION ACCURACY ***\n")
-            train_top5, train_top20, train_top100 = self.topk.get_results(self.p_encoder, epoch, train_dataloader, True)
-            valid_top5, valid_top20, valid_top100 = self.topk.get_results(self.p_encoder, epoch, valid_dataloader, False)
+            train_top5, train_top20, train_top100, _, _ = self.topk.get_results(self.p_encoder, epoch, train_dataloader, True)
+            valid_top5, valid_top20, valid_top100, _, _ = self.topk.get_results(self.p_encoder, epoch, valid_dataloader, False)
             wandb.log({
                 "train_top5 accuracy" : train_top5,
                 "train_top20 accuracy" : train_top20,
