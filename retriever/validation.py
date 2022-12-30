@@ -5,6 +5,7 @@ import pickle
 import argparse
 import pandas as pd
 from tqdm import tqdm
+from utils import TOPK
 from model import DenseRetriever
 from transformers import AutoTokenizer
 from torch.utils.data import DataLoader
@@ -15,18 +16,13 @@ def main(config):
     ### Load wikipedia documents ###
     print(f"retriever > validation.py > main: Preprocess wikipedia documents")
     tokenizer = AutoTokenizer.from_pretrained(config["model_name_or_path"])
-    wiki_dataset = WikiDataset(config, tokenizer)
-    print("done!")
-    wiki_dataloader = DataLoader(wiki_dataset, batch_size=config["batch_size"])
+    topk = TOPK(config, tokenizer)
 
     ### Load the trained passage and question encoder ###
     print(f"retriever > validation.py > main: Load the trained encoders")
     p_encoder = DenseRetriever(config)
-
     p_encoder.load_state_dict(torch.load(config["p_encoder_load_path"]))
-
     p_encoder.eval()
-
     p_encoder = p_encoder.to("cuda")
 
     ### Get the features of wikipedia documents ###
@@ -39,76 +35,26 @@ def main(config):
             p_outputs = pickle.load(f)
     else:
         print("retriever > validation.py > main: Create the features of wikipedia documents")
-        p_outputs = []
-        for data in tqdm(wiki_dataloader):
-            data = {k: v.to("cuda") for k, v in data.items()}
-            with torch.no_grad():
-                p_output = p_encoder(**data)
-            p_outputs.append(p_output.cpu())
-        p_outputs = torch.cat(
-            p_outputs, dim=0
-        )  # Size: (number of subdocuments, dimension of hidden state)
+        p_outputs = topk.get_passage_outputs(p_encoder, -1)
         print(
             f"retriever > validation.py > main: Save features in {config['corpus_feature_path']}"
         )
-        with open(config["corpus_feature_path"], "wb") as f:
-            pickle.dump(p_outputs, f)
 
     ### Load questions ###
     valid_dataset = RetrieverDataset(config, mode="validation")
     valid_dataloader = DataLoader(valid_dataset, batch_size=config["batch_size"])
-
-    print(
-        f"retriever > validation.py > main: Preprocessing questions from the validation set of {config['train_data_path']}"
-    )
-    q_outputs = []
-    label_outputs = []
-    for data in valid_dataloader:
-        with torch.no_grad():
-            data = [d.to("cuda") for d in data]
-            label_output = p_encoder(data[0], data[1], data[2])
-            question_output = p_encoder(data[3], data[4], data[5])
-        q_outputs.append(question_output.cpu())
-        label_outputs.append(label_output.cpu())
-    q_outputs = torch.cat(
-        q_outputs, dim=0
-    )  # Size: (number of questions, dimension of hidden state)
-    label_outputs = torch.cat(
-        label_outputs, dim=0
-    )  # Size: (number of questions, dimension of hidden state)
-
-    ### Compute similarity scores between questions and subdocuments ###
-    scores = torch.matmul(q_outputs, p_outputs.T)
-    topk_indices = []
-    topk_scores = []
-    for score in scores:
-        topk_res = torch.topk(score, 100)
-        topk_indices.append(topk_res.indices)
-        topk_scores.append(topk_res.values)
-
-    top5 = calc_wiki_accuracy(p_outputs, label_outputs, topk_indices, 5)
-    top10 = calc_wiki_accuracy(p_outputs, label_outputs, topk_indices, 10)
-    top20 = calc_wiki_accuracy(p_outputs, label_outputs, topk_indices, 20)
-    top30 = calc_wiki_accuracy(p_outputs, label_outputs, topk_indices, 30)
-    top40 = calc_wiki_accuracy(p_outputs, label_outputs, topk_indices, 40)
-    top50 = calc_wiki_accuracy(p_outputs, label_outputs, topk_indices, 50)
-    top100 = calc_wiki_accuracy(p_outputs, label_outputs, topk_indices, 100)
+    
+    ks = [5, 10, 20, 50, 100]
+    [top5, top10, top20, top50, top100], topk_indices, scores = topk.get_results(p_encoder, valid_dataloader, p_outputs, ks)
+    
     print("top-5 result :", top5)
     print("top-10 result :", top10)
     print("top-20 result :", top20)
-    print("top-30 result :", top30)
-    print("top-40 result :", top40)
     print("top-50 result :", top50)
     print("top-100 result :", top100)
 
     ### Save the pairs of question and top-k subdocuments ###
-    save_topk_file(valid_dataset, wiki_dataset, tokenizer, 5, topk_indices, scores)
-    save_topk_file(valid_dataset, wiki_dataset, tokenizer, 10, topk_indices, scores)
-    save_topk_file(valid_dataset, wiki_dataset, tokenizer, 20, topk_indices, scores)
-    save_topk_file(valid_dataset, wiki_dataset, tokenizer, 30, topk_indices, scores)
-    save_topk_file(valid_dataset, wiki_dataset, tokenizer, 40, topk_indices, scores)
-    save_topk_file(valid_dataset, wiki_dataset, tokenizer, 50, topk_indices, scores)
-    save_topk_file(valid_dataset, wiki_dataset, tokenizer, 100, topk_indices, scores)
+    save_topk_file(valid_dataset, topk.wiki_dataset, tokenizer, 100, topk_indices, scores)
 
 def save_topk_file(valid_dataset, wiki_dataset, tokenizer, topk, topk_indices, scores):
     result = {
@@ -156,18 +102,6 @@ def save_topk_file(valid_dataset, wiki_dataset, tokenizer, topk, topk_indices, s
             result["subdocument_id"].append(topk_index.item())
             result["similarity_score"].append(scores[question_index][topk_index].item())
     pd.DataFrame.from_dict(result).to_csv(f"{config['validation_result_path'][:-4]}-{topk}.csv")
-
-
-def calc_wiki_accuracy(pred_context, label_context, indexes, k):
-    correct = 0
-    for i, index in enumerate(indexes):
-        label = label_context[i]
-        for idx in index[:k]:  # top-k
-            if pred_context[idx].tolist() == label.tolist():
-                correct += 1
-                break
-
-    return correct / len(indexes)
 
 
 if __name__ == "__main__":
