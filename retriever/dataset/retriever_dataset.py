@@ -104,12 +104,14 @@ class RetrieverDataset(Dataset):
 
         Passages = {"input_ids": [], "attention_mask": [], "token_type_ids": []}
         Questions = []
+        Answers = []
 
         for passage, question in zip(tokenized_passages, questions):
             if question != None:
                 Passages["input_ids"].append(passage["input_ids"])
                 Passages["attention_mask"].append(passage["attention_mask"])
                 Passages["token_type_ids"].append(passage["token_type_ids"])
+                Answers.append(passage["answers"])
                 Questions.append(question)
 
         tokenized_questions = self.tokenizer(
@@ -117,6 +119,8 @@ class RetrieverDataset(Dataset):
         )
 
         tokenized_passages = {k: torch.tensor(v) for k, v in Passages.items()}
+
+        self.answers = Answers
 
         return tokenized_passages, tokenized_questions
 
