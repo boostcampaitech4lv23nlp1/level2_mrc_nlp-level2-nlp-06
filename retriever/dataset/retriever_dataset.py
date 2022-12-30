@@ -115,7 +115,7 @@ class RetrieverDataset(Dataset):
         )
         questions = tokenized_passages["questions"]
 
-        Passages = {"input_ids": [], "attention_mask": [], "token_type_ids": []}
+        Passages = {"input_ids": [], "attention_mask": [], "token_type_ids": [], "overflow_to_sample_mapping": []}
         Questions = []
         Answers = []
 
@@ -124,6 +124,7 @@ class RetrieverDataset(Dataset):
                 Passages["input_ids"].append(passage["input_ids"])
                 Passages["attention_mask"].append(passage["attention_mask"])
                 Passages["token_type_ids"].append(passage["token_type_ids"])
+                Passages["overflow_to_sample_mapping"].append(passage["overflow_to_sample_mapping"])
                 Answers.append(passage["answers"])
                 Questions.append(question)
 
