@@ -45,7 +45,8 @@ def main(config):
     valid_dataloader = DataLoader(valid_dataset, batch_size=config["batch_size"])
     
     ks = [5, 10, 20, 50, 100]
-    [top5, top10, top20, top50, top100], topk_indices, scores = topk.get_results(p_encoder, valid_dataloader, p_outputs, ks)
+    scores, label_outputs = topk.get_results(p_encoder, valid_dataloader, p_outputs)
+    [top5, top10, top20, top50, top100], topk_indices = topk.get_topk_results(p_outputs, scores, label_outputs, ks)
     
     print("top-5 result :", top5)
     print("top-10 result :", top10)
