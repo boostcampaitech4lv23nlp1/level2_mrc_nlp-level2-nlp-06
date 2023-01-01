@@ -3,16 +3,18 @@ from datasets import load_from_disk
 from tf_idf import TfIdfRetrieval
 from BM25 import BM25Retriever
 import pandas as pd
+import argparse
+import yaml
 
 
-def main():
-    corpus_path = "../../../ODQA/data/wikipedia_documents.json"
-    pickle_path = "tf-idf_wiki.pickle"
-    tokenizer_name = "klue/bert-base"
-    validation_path = "../../../ODQA/data/train_dataset"
-    result_path = "tf-idf_valid_result.csv"
-    sparse = "tf-idf"
-    top_k = 3
+def main(config):
+    corpus_path = config["corpus_path"]
+    pickle_path = config["pickle_path"]
+    tokenizer_name = config["tokenizer_name"]
+    validation_path = config["validation_path"]
+    result_path = config["result_path"]
+    sparse = config["sparse"]
+    top_k = config["top_k"]
     assert sparse in ["BM25", "tf-idf"], print("sparse must be in ['BM25', 'tf-idf']")
     
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
@@ -47,5 +49,10 @@ def main():
     
     
 if __name__=="__main__":
-    main()
+    parser = argparse.ArgumentParser(description='config for retriever.')
+    parser.add_argument("--conf", type=str, default="config.yaml", help="config file path(.yaml)")
+    args = parser.parse_args()
+    with open(args.conf, "r") as f:
+        config = yaml.load(f, Loader=yaml.Loader)
+    main(config)
     
