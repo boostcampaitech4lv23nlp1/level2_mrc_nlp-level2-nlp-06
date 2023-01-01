@@ -117,22 +117,49 @@ if __name__ == "__main__":
                         "score": start_logits[start_index] + end_logits[end_index],
                         "start_logit": start_logits[start_index],
                         "end_logit": end_logits[end_index],
-                        "context": now_data["subdocument"]
+                        "context": now_data["subdocument"],
+                        "similarity_score": now_data["similarity_score"]
                     }
                 )
+    
+    ## Calculate the probability
+    for item in store:
+        scores = []
+        similaritys = []
+        if not item: continue
         
+        for score in item:
+            scores.append(score["score"])
+        for similarity in item:
+            similaritys.append(similarity["similarity_score"])
+        
+        sentence_scores = np.array(scores)
+        similaritys = np.array(similaritys)
+        exp_scores = np.exp(sentence_scores - np.max(sentence_scores))
+        exp_similarity = np.exp(similaritys - np.max(similaritys))
+        probs = exp_scores / exp_scores.sum()
+        similarity_probs = exp_similarity / exp_similarity.sum()
+
+        for i, unit in enumerate(item):
+            unit["probs"] = probs[i]
+            unit["similarity_probs"] = similarity_probs[i]
+    
     ## Get Predictions & Answers
     predictions = []
     for item in store:
         if not item: continue
         predictions.append(
             sorted(
-                item, key=lambda x: x["score"], reverse=True
+                item, key=lambda x: x["probs"] * x["similarity_probs"], reverse=True
             )[:config["n_best_size"]]
         )
     
     answer = []
     for prediction in predictions:
+        topk_score = np.array([pred.pop("similarity_score") for pred in prediction])
+        exp_topk_score = np.exp(topk_score - np.max(topk_score))
+        topk_probs = exp_topk_score / exp_topk_score.sum()
+        
         scores = np.array([pred.pop("score") for pred in prediction])
         exp_scores = np.exp(scores - np.max(scores))
         probs = exp_scores / exp_scores.sum()
