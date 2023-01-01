@@ -145,8 +145,8 @@ if __name__ == "__main__":
         i = 0
         while (
             prediction[i]["text"] == "" or 
-            len(prediction[i]["text"]) > config["max_answer_length"] #or
-            #"\n" in prediction[i]["text"] or
+            len(prediction[i]["text"]) > config["max_answer_length"] or
+            "\n" in prediction[i]["text"] #or
             #"." in prediction[i]["text"] or
             #"," in prediction[i]["text"]
         ):
@@ -162,18 +162,31 @@ if __name__ == "__main__":
     
     test_id = test_data["id"]
     question = test_data["question"]
-    
+
+    ## Result for only answer
     result = OrderedDict()
     for i in range(len(answer)):
         result[test_id[i]] = answer[i]
         
-    prediction_file = os.path.join("/opt/ml/results/", "predictions.json")  
+    prediction_file = os.path.join("/opt/ml/results/", config["result_file_name"])
     with open(prediction_file, "w", encoding="utf-8") as writer:
         writer.write(
             json.dumps(result, indent=4, ensure_ascii=False) + "\n"
         )
     
-    
+    ## Result for n-best answer
+    n_best_result = OrderedDict()
+    for i in range(len(answer)):
+        store = []
+        for item in predictions[i]:
+            store.append(item["text"])
+        n_best_result[test_id[i]] = str(store)
+        
+    n_best_file = os.path.join("/opt/ml/results/", "n_best_" + config["result_file_name"])  
+    with open(n_best_file, "w", encoding="utf-8") as writer:
+        writer.write(
+            json.dumps(n_best_result, indent=4, ensure_ascii=False) + "\n"
+        )
     
     
     
