@@ -50,13 +50,6 @@ class RetrieverDataset(Dataset):
                 self.tokenized_passages,
                 self.tokenized_questions,
             ) = self.construct_in_batch_negative_sampled_dataset()
-            
-            if config["hard_negative_nums"] > 0:
-                hn_df = pd.read_csv(config["hard_negative_df_path"])
-                
-                self.tokenized_hard_negatives = self.PE.get_hard_negatives(
-                    self.dataset, self.tokenized_passages, config["hard_negative_nums"], hn_df
-                )
         elif mode == "validation":
             print(
                 "RetrieverDataset > __init__: You are currently in the VALIDATION process. It will construct in-batch negative samples."
@@ -85,12 +78,6 @@ class RetrieverDataset(Dataset):
                 self.tokenized_questions["attention_mask"][index],
                 self.tokenized_questions["token_type_ids"][index],
             ]
-            if self.config["hard_negative_nums"] > 0 and self.mode == "train":
-                items += [
-                    torch.tensor(self.tokenized_hard_negatives['input_ids'][index]),
-                    torch.tensor(self.tokenized_hard_negatives['attention_mask'][index]),
-                    torch.tensor(self.tokenized_hard_negatives['token_type_ids'][index])
-                ]
         elif self.mode == "test":
             items = [
                 self.tokenized_questions["input_ids"][index],
@@ -138,6 +125,30 @@ class RetrieverDataset(Dataset):
         self.answers = Answers
 
         return tokenized_passages, tokenized_questions
+    
+class HardNegatives(Dataset):
+    def __init__(self, config, tokenizer, max_length, stride):
+        super(HardNegatives, self).__init__()
+        self.config = config
+        self.hn_df = pd.read_csv(config["hard_negative_df_path"])
+        self.PE = Preprocess_features(tokenizer, max_length, stride)
+        self.tokenized_hard_negatives = None
+        
+    def construct_hard_negatives(self, dataset, tokenized_passages):
+        self.tokenized_hard_negatives = self.PE.get_hard_negatives(
+            dataset=dataset, 
+            tokenized_passages=tokenized_passages, 
+            hard_negative_nums=self.config["hard_negative_nums"], 
+            hn_df=self.hn_df
+        )
+            
+    def __getitem__(self, index):
+        items = [
+            torch.tensor(self.tokenized_hard_negatives['input_ids'][index]),
+            torch.tensor(self.tokenized_hard_negatives['attention_mask'][index]),
+            torch.tensor(self.tokenized_hard_negatives['token_type_ids'][index])
+        ]
+        return items
 
 
 class AugmentedRetrieverDataset(Dataset):
