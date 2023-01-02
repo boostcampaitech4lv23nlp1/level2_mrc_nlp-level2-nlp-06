@@ -24,6 +24,8 @@ weight_decay: 0.01
 learning_rate: 2.e-5
 warmup_ratio: 0.5
 epochs: 2
+hard_negative_nums: 1 # if 0, then it'll not load hard_negative_df_path file.
+hard_negative_df_path: "path of hard negative csv files."
 
 # Tokenizing
 max_length: 384

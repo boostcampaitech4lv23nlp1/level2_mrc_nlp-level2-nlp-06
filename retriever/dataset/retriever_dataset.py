@@ -50,6 +50,13 @@ class RetrieverDataset(Dataset):
                 self.tokenized_passages,
                 self.tokenized_questions,
             ) = self.construct_in_batch_negative_sampled_dataset()
+            
+            if config["hard_negative_nums"] > 0:
+                hn_df = pd.read_csv(config["hard_negative_df_path"])
+                
+                self.tokenized_hard_negatives = self.PE.get_hard_negatives(
+                    self.dataset, self.tokenized_passages, config["hard_negative_nums"], hn_df
+                )
         elif mode == "validation":
             print(
                 "RetrieverDataset > __init__: You are currently in the VALIDATION process. It will construct in-batch negative samples."
@@ -70,20 +77,27 @@ class RetrieverDataset(Dataset):
 
     def __getitem__(self, index):
         if self.mode in ["train", "validation"]:
-            return (
+            items = [
                 self.tokenized_passages["input_ids"][index],
                 self.tokenized_passages["attention_mask"][index],
                 self.tokenized_passages["token_type_ids"][index],
                 self.tokenized_questions["input_ids"][index],
                 self.tokenized_questions["attention_mask"][index],
                 self.tokenized_questions["token_type_ids"][index],
-            )
+            ]
+            if self.config["hard_negative_nums"] > 0 and self.mode == "train":
+                items += [
+                    torch.tensor(self.tokenized_hard_negatives['input_ids'][index]),
+                    torch.tensor(self.tokenized_hard_negatives['attention_mask'][index]),
+                    torch.tensor(self.tokenized_hard_negatives['token_type_ids'][index])
+                ]
         elif self.mode == "test":
-            return (
+            items = [
                 self.tokenized_questions["input_ids"][index],
                 self.tokenized_questions["attention_mask"][index],
                 self.tokenized_questions["token_type_ids"][index],
-            )
+            ]
+        return items
 
     def __len__(self):
         if self.mode in ["train", "validation"]:
@@ -102,7 +116,7 @@ class RetrieverDataset(Dataset):
         )
         questions = tokenized_passages["questions"]
 
-        Passages = {"input_ids": [], "attention_mask": [], "token_type_ids": []}
+        Passages = {"input_ids": [], "attention_mask": [], "token_type_ids": [], "overflow_to_sample_mapping": []}
         Questions = []
         Answers = []
 
@@ -111,6 +125,7 @@ class RetrieverDataset(Dataset):
                 Passages["input_ids"].append(passage["input_ids"])
                 Passages["attention_mask"].append(passage["attention_mask"])
                 Passages["token_type_ids"].append(passage["token_type_ids"])
+                Passages["overflow_to_sample_mapping"].append(passage["overflow_to_sample_mapping"])
                 Answers.append(passage["answers"])
                 Questions.append(question)
 

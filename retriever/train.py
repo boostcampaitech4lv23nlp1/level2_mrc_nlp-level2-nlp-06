@@ -80,9 +80,22 @@ class RetrieverTrainer:
             train_loss = 0
             valid_loss = 0
             for batch in tqdm(train_dataloader):
+                batch_size = batch[0].shape[0]
                 self.p_encoder.train()
-                _, _, sim_scores = self.forward_step(batch)
-                targets = torch.arange(0, batch[0].shape[0]).long()
+                _, q_output, sim_scores = self.forward_step(batch)
+                if config['hard_negative_nums'] > 0:
+                    hn_output = self.p_encoder(
+                        batch[6].to(self.args.device), 
+                        batch[7].to(self.args.device), 
+                        batch[8].to(self.args.device)
+                    )
+                    del batch
+                    torch.cuda.empty_cache()
+                    hn_scores = torch.diag(torch.matmul(hn_output, q_output.T))
+                    sim_scores = torch.cat((sim_scores, hn_scores.unsqueeze(1)), dim=1)
+                    
+                
+                targets = torch.arange(0, batch_size).long()
                 targets = targets.to(self.args.device)
 
                 sim_scores = F.log_softmax(sim_scores, dim=-1)
