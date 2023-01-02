@@ -4,69 +4,48 @@ import torch
 import pickle
 import argparse
 import pandas as pd
-from tqdm import tqdm
+from utils import TOPK
 from model import DenseRetriever
+from dataset import RetrieverDataset
 from transformers import AutoTokenizer
 from torch.utils.data import DataLoader
-from dataset import RetrieverDataset, WikiDataset
 
 
 def main(config):
     ### Load wikipedia documents ###
-    print(f"retriever > test.py > main: Preprocess wikipedia documents")
+    print(f"retriever > inference.py > main: Preprocess wikipedia documents")
     tokenizer = AutoTokenizer.from_pretrained(config["model_name_or_path"])
-    wiki_dataset = WikiDataset(config, tokenizer)
-    wiki_dataloader = DataLoader(wiki_dataset, batch_size=config["batch_size"])
+    topk = TOPK(config, tokenizer)
+    wiki_dataset = topk.wiki_dataset
 
     ### Load the trained passage and question encoder ###
-    print(f"retriever > test.py > main: Load the trained encoders")
+    print(f"retriever > inference.py > main: Load the trained encoders")
     p_encoder = DenseRetriever(config)
-
     p_encoder.load_state_dict(torch.load(config["p_encoder_load_path"]))
-
     p_encoder.eval()
-
     p_encoder = p_encoder.to("cuda")
 
     ### Get the features of wikipedia documents ###
     if os.path.exists(config["corpus_feature_path"]):
         print(
-            f"retriever > test.py > main: Saved features file {config['corpus_feature_path']} is found."
+            f"retriever > inference.py > main: Saved features file {config['corpus_feature_path']} is found."
         )
         print("This does not inference again.")
         with open(config["corpus_feature_path"], "rb") as f:
             p_outputs = pickle.load(f)
     else:
-        print("retriever > test.py > main: Create the features of wikipedia documents")
-        p_outputs = []
-        for data in tqdm(wiki_dataloader):
-            data = {k: v.to("cuda") for k, v in data.items()}
-            with torch.no_grad():
-                p_output = p_encoder(**data)
-            p_outputs.append(p_output.cpu())
-        p_outputs = torch.cat(
-            p_outputs, dim=0
-        )  # Size: (number of subdocuments, dimension of hidden state)
+        print("retriever > inference.py > main: Create the features of wikipedia documents")
+        p_outputs = topk.get_passage_outputs(p_encoder, -1)
         print(
-            f"retriever > test.py > main: Save features in {config['corpus_feature_path']}"
+            f"retriever > inference.py > main: Save features in {config['corpus_feature_path']}"
         )
-        with open(config["corpus_feature_path"], "wb") as f:
-            pickle.dump(p_outputs, f)
 
     ### Load questions ###
     test_dataset = RetrieverDataset(config, mode="test")
     test_dataloader = DataLoader(test_dataset, batch_size=config["batch_size"])
 
-    print(f"retriever > test.py > main: Preprocessing questions from {config['test_data_path']}")
-    q_outputs = []
-    for data in tqdm(test_dataloader):
-        with torch.no_grad():
-            data = [d.to("cuda") for d in data]
-            question_output = p_encoder(data[0], data[1], data[2])
-        q_outputs.append(question_output.cpu())
-    q_outputs = torch.cat(
-        q_outputs, dim=0
-    )  # Size: (number of questions, dimension of hidden state)
+    print(f"retriever > inference.py > main: Preprocessing questions from {config['test_data_path']}")
+    q_outputs = topk.get_results(p_encoder, test_dataloader, p_outputs, mode="test")
 
     ### Compute similarity scores between questions and subdocuments ###
     scores = torch.matmul(
@@ -82,16 +61,10 @@ def main(config):
         topk_scores.append(topk_result.values)
 
     ### Save the pairs of question and top-k subdocuments ###
-    save_topk_file(test_dataset, wiki_dataset, tokenizer, 5, topk_indices, scores)
-    save_topk_file(test_dataset, wiki_dataset, tokenizer, 10, topk_indices, scores)
-    save_topk_file(test_dataset, wiki_dataset, tokenizer, 20, topk_indices, scores)
-    save_topk_file(test_dataset, wiki_dataset, tokenizer, 30, topk_indices, scores)
-    save_topk_file(test_dataset, wiki_dataset, tokenizer, 40, topk_indices, scores)
-    save_topk_file(test_dataset, wiki_dataset, tokenizer, 50, topk_indices, scores)
-    save_topk_file(test_dataset, wiki_dataset, tokenizer, 100, topk_indices, scores)
+    save_topk_file(test_dataset, wiki_dataset, config["top_k"], topk_indices, scores)
 
 
-def save_topk_file(test_dataset, wiki_dataset, tokenizer, topk, topk_indices, scores):
+def save_topk_file(test_dataset, wiki_dataset, topk, topk_indices, scores):
     result = {
         "question": [],
         "subdocument": [],
