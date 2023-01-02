@@ -83,7 +83,7 @@ class RetrieverTrainer:
                 batch_size = batch[0].shape[0]
                 self.p_encoder.train()
                 _, q_output, sim_scores = self.forward_step(batch)
-                if config['hard_negatives_num'] > 0:
+                if config['hard_negative_nums'] > 0:
                     hn_output = self.p_encoder(
                         batch[6].to(self.args.device), 
                         batch[7].to(self.args.device), 
