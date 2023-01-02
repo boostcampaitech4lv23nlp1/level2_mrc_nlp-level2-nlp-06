@@ -222,4 +222,4 @@ class WikiDataset(Dataset):
 
         You can customize the following preprocessing approach.
         """
-        self.corpus = [context.replace("\n", "") for context in self.corpus]
+        self.corpus = [context.replace("\\n", "") for context in self.corpus]

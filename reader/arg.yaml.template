@@ -1,0 +1,32 @@
+## 1. First consideration
+model_name: "klue/bert-base"
+model_save_path: "./save/model1.pt"
+train_type: 0                        ## {0: Extraction Based, 1: Generation Based}
+train_data_path: "/opt/ml/input/data/train_dataset"
+dataset: "squad_kor_v1"
+output_dir: "./outputs"
+
+## 2. Hyper-Parameters
+epoch: 2
+lr: 3.0e-5
+n_best_size: 20
+max_answer_length: 30
+weight_decay: 0.01
+batch_size: 8
+warmup_steps: 200
+mx_token_length: 512
+stride: 128
+max_target_length: 30
+num_beams: 2
+position: True                       ## {True: question first, False: context first}
+num_proc: 4
+null_score_diff_threshold: 0.01
+num_sample: -1
+
+
+## 0. Wandb setting
+wandb_project: ""
+wandb_name: ""
+wandb_group: ""
+wandb_note: ""
+
