@@ -55,7 +55,7 @@ def main(config):
     print("top-100 result :", top100)
 
     ### Save the pairs of question and top-k subdocuments ###
-    save_topk_file(valid_dataset, topk.wiki_dataset, tokenizer, 100, topk_indices, scores)
+    save_topk_file(valid_dataset, topk.wiki_dataset, tokenizer, config["top_k"], topk_indices, scores)
 
 def save_topk_file(valid_dataset, wiki_dataset, tokenizer, topk, topk_indices, scores):
     result = {

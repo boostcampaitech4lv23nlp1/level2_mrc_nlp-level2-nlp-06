@@ -61,7 +61,7 @@ def main(config):
         topk_scores.append(topk_result.values)
 
     ### Save the pairs of question and top-k subdocuments ###
-    save_topk_file(test_dataset, wiki_dataset, 100, topk_indices, scores)
+    save_topk_file(test_dataset, wiki_dataset, config["top_k"], topk_indices, scores)
 
 
 def save_topk_file(test_dataset, wiki_dataset, topk, topk_indices, scores):
