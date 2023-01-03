@@ -70,7 +70,7 @@ class RetrieverDataset(Dataset):
             )
 
     def __getitem__(self, index):
-        if self.mode in ["train", "validation"]:
+        if self.mode in ["train", "validation", "korquad"]:
             items = [
                 self.tokenized_passages["input_ids"][index],
                 self.tokenized_passages["attention_mask"][index],
@@ -88,7 +88,7 @@ class RetrieverDataset(Dataset):
         return items
 
     def __len__(self):
-        if self.mode in ["train", "validation"]:
+        if self.mode in ["train", "validation", "korquad"]:
             return len(self.tokenized_passages["input_ids"])
         elif self.mode == "test":
             return len(self.dataset)
