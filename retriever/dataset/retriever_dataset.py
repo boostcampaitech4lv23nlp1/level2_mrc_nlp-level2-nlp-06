@@ -141,6 +141,9 @@ class HardNegatives(Dataset):
             hard_negative_nums=self.config["hard_negative_nums"], 
             hn_df=self.hn_df
         )
+    
+    def __len__(self):
+        return len(self.tokenized_hard_negatives['input_ids'])
             
     def __getitem__(self, index):
         items = [
