@@ -44,7 +44,7 @@ class RetrieverDataset(Dataset):
                 "RetrieverDataset > __init__: You are currently in the TRAINING process. It will construct in-batch negative samples."
             )
             if mode == "korquad":
-                self.dataset = load_dataset("squad_kor_v1")
+                self.dataset = load_dataset("squad_kor_v1")["train"]
             else:
                 self.dataset = load_from_disk(config["train_data_path"])["train"]
             (
