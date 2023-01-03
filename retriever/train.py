@@ -10,7 +10,7 @@ from utils import TOPK, set_seed
 from model import DenseRetriever
 from torch.utils.data import DataLoader
 from transformers import TrainingArguments, get_linear_schedule_with_warmup
-from dataset import RetrieverDataset, WikiDataset, AugmentedRetrieverDataset
+from dataset import RetrieverDataset, WikiDataset, HardNegatives
 
 
 class RetrieverTrainer:
@@ -29,7 +29,7 @@ class RetrieverTrainer:
         )
 
         if self.config["use_multiple_datasets"]:
-            self.train_datasets = AugmentedRetrieverDataset(self.config)
+            self.train_datasets = RetrieverDataset(self.config, mode="korquad")
         else:
             self.train_datasets = RetrieverDataset(self.config, mode="train")
         self.valid_datasets = RetrieverDataset(self.config, mode="validation")
@@ -44,13 +44,30 @@ class RetrieverTrainer:
 
         self.wikidataset = WikiDataset(config=config, tokenizer=self.train_datasets.tokenizer)
         self.wikiloader = DataLoader(self.wikidataset, batch_size=16, shuffle=False)
-        
         self.topk = TOPK(config, self.train_datasets.tokenizer)
+        
+        if self.config["hard_negative_nums"] > 0:
+            self.hn_dataset = HardNegatives(
+                config=self.config, 
+                tokenizer=self.train_datasets.tokenizer,
+                max_length=config["max_length"],
+                stride=config["stride"]
+            )
+            self.hn_dataset.construct_hard_negatives(
+                dataset=self.train_datasets.dataset, 
+                tokenized_passages=self.train_datasets.tokenized_passages
+            )
 
 
     def train(self):
         train_dataloader = DataLoader(self.train_datasets, batch_size=self.config["batch_size"], shuffle=True)
         valid_dataloader = DataLoader(self.valid_datasets, batch_size=self.config["batch_size"])
+        hn_num = self.config["hard_negative_nums"]
+        if hn_num > 0:
+            hn_loader = DataLoader(
+                dataset=self.hn_dataset, 
+                batch_size=self.config["batch_size"]*self.config["hard_negative_nums"]
+            )
         
         # Optimizer
         no_decay = ["bias", "LayerNorm.weight"]
@@ -79,21 +96,26 @@ class RetrieverTrainer:
         for epoch in tqdm(range(self.config["epochs"])):
             train_loss = 0
             valid_loss = 0
+            if hn_num > 0:
+                hn_iter = iter(hn_loader)
             for batch in tqdm(train_dataloader):
                 batch_size = batch[0].shape[0]
                 self.p_encoder.train()
                 _, q_output, sim_scores = self.forward_step(batch)
-                if config['hard_negative_nums'] > 0:
+                if hn_num > 0:
+                    hn_batch = next(hn_iter)
                     hn_output = self.p_encoder(
-                        batch[6].to(self.args.device), 
-                        batch[7].to(self.args.device), 
-                        batch[8].to(self.args.device)
+                        hn_batch[0].to(self.args.device), 
+                        hn_batch[1].to(self.args.device), 
+                        hn_batch[2].to(self.args.device)
                     )
-                    del batch
-                    torch.cuda.empty_cache()
-                    hn_scores = torch.diag(torch.matmul(hn_output, q_output.T))
-                    sim_scores = torch.cat((sim_scores, hn_scores.unsqueeze(1)), dim=1)
+                    del hn_batch
+                    temp = [hn_output[i*hn_num:(i+1)*hn_num].unsqueeze(0) for i in range(batch_size)]
+                    hn_output = torch.cat(temp, dim=0)
+                    temp = q_output.unsqueeze(1)
+                    score = torch.bmm(hn_output, temp.transpose(1, 2)).squeeze()
                     
+                    sim_scores = torch.cat((sim_scores, score), dim=1)
                 
                 targets = torch.arange(0, batch_size).long()
                 targets = targets.to(self.args.device)
@@ -179,7 +201,6 @@ class RetrieverTrainer:
 
 
     def save_checkpoint(self, epoch, valid_loss):
-        ## TODO: save_path로 디렉토리를 받도록 수정하기. 이를 위해선 inference 코드들이 수정되어야 함. -> inference용 config 만들기.
         torch.save(self.p_encoder.state_dict(), f"{self.config['p_encoder_save_path'][:-3]}-{epoch}-{valid_loss:.6f}.pt")
 
 

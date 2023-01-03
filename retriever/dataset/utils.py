@@ -82,7 +82,7 @@ class Preprocess_features:
         hard_negatives = []
 
         for i, question in enumerate(dataset['question']):
-            hard_negative = list(hn_df['hard_negative'][i*5:(i+1)*5])
+            hard_negative = list(hn_df[hn_df['hard_negative']==question])
             hard_negative = hard_negative[:hard_negative_nums]
             hard_negatives += hard_negative
         hard_negatives = [n.replace("\\n", "").replace("\n", "") for n in hard_negatives]

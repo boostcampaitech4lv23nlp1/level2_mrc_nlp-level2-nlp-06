@@ -26,6 +26,10 @@ warmup_ratio: 0.5
 epochs: 2
 hard_negative_nums: 1 # if 0, then it'll not load hard_negative_df_path file.
 hard_negative_df_path: "path of hard negative csv files."
+'''
+hard_negative csv file needs at least 2 columns ['question', 'hard_negative'].
+And it needs more hard negative passages than hard_negative_nums per question.
+'''
 
 # Tokenizing
 max_length: 384
