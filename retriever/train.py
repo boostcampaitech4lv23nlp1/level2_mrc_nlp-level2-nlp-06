@@ -54,8 +54,8 @@ class RetrieverTrainer:
                 stride=config["stride"]
             )
             self.hn_dataset.construct_hard_negatives(
-                dataset=self.train_dataset.dataset, 
-                tokenized_passages=self.train_dataset.tokenized_passages
+                dataset=self.train_datasets.dataset, 
+                tokenized_passages=self.train_datasets.tokenized_passages
             )
 
 
