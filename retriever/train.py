@@ -10,7 +10,7 @@ from utils import TOPK, set_seed
 from model import DenseRetriever
 from torch.utils.data import DataLoader
 from transformers import TrainingArguments, get_linear_schedule_with_warmup
-from dataset import RetrieverDataset, WikiDataset, AugmentedRetrieverDataset
+from dataset import RetrieverDataset, WikiDataset, AugmentedRetrieverDataset, HardNegatives
 
 
 class RetrieverTrainer:
@@ -44,8 +44,19 @@ class RetrieverTrainer:
 
         self.wikidataset = WikiDataset(config=config, tokenizer=self.train_datasets.tokenizer)
         self.wikiloader = DataLoader(self.wikidataset, batch_size=16, shuffle=False)
-        
         self.topk = TOPK(config, self.train_datasets.tokenizer)
+        
+        if self.config["hard_negative_nums"] > 0:
+            self.hn_dataset = HardNegatives(
+                config=self.config, 
+                tokenizer=self.train_datasets.tokenizer,
+                max_length=config["max_length"],
+                stride=config["stride"]
+            )
+            self.hn_dataset.construct_hard_negatives(
+                dataset=self.train_dataset.dataset, 
+                tokenized_passages=self.train_dataset.tokenized_passages
+            )
 
 
     def train(self):
