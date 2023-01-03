@@ -10,7 +10,7 @@ from utils import TOPK, set_seed
 from model import DenseRetriever
 from torch.utils.data import DataLoader
 from transformers import TrainingArguments, get_linear_schedule_with_warmup
-from dataset import RetrieverDataset, WikiDataset, AugmentedRetrieverDataset, HardNegatives
+from dataset import RetrieverDataset, WikiDataset, HardNegatives
 
 
 class RetrieverTrainer:
@@ -29,7 +29,7 @@ class RetrieverTrainer:
         )
 
         if self.config["use_multiple_datasets"]:
-            self.train_datasets = AugmentedRetrieverDataset(self.config)
+            self.train_datasets = RetrieverDataset(self.config, mode="korquad")
         else:
             self.train_datasets = RetrieverDataset(self.config, mode="train")
         self.valid_datasets = RetrieverDataset(self.config, mode="validation")
