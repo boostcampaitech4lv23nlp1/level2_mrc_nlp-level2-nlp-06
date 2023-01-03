@@ -1,12 +1,9 @@
 import torch
-import datasets
-import numpy as np
 import pandas as pd
-from typing import List
-from datasets import load_from_disk, load_dataset
 from torch.utils.data import Dataset
 from .utils import Preprocess_features
 from transformers import AutoTokenizer
+from datasets import load_from_disk, load_dataset
 
 
 class RetrieverDataset(Dataset):
@@ -168,7 +165,7 @@ class WikiDataset(Dataset):
     def __init__(self, config, tokenizer):
         super(WikiDataset, self).__init__()
         self.corpus = pd.read_csv(config["corpus_path"])["text"]
-        self.preprocess_corpus()
+        self.corpus = [context.replace("\\n", "") for context in self.corpus]
 
         self.contexts = tokenizer(
             self.corpus,
@@ -190,10 +187,3 @@ class WikiDataset(Dataset):
             "attention_mask": self.contexts["attention_mask"][idx],
             "token_type_ids": self.contexts["token_type_ids"][idx],
         }
-
-    def preprocess_corpus(self):
-        """Preprocess the contexts in the Wikipedia corpus
-
-        You can customize the following preprocessing approach.
-        """
-        self.corpus = [context.replace("\\n", "") for context in self.corpus]
