@@ -62,6 +62,11 @@ class RetrieverTrainer:
     def train(self):
         train_dataloader = DataLoader(self.train_datasets, batch_size=self.config["batch_size"], shuffle=True)
         valid_dataloader = DataLoader(self.valid_datasets, batch_size=self.config["batch_size"])
+        if self.config["hard_negative_nums"] > 0:
+            hn_loader = DataLoader(
+                dataset=self.hn_dataset, 
+                batch_size=self.config["batch_size"]*self.config["hard_negative_nums"]
+            )
         
         # Optimizer
         no_decay = ["bias", "LayerNorm.weight"]
