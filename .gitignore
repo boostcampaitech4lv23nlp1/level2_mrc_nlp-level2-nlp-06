@@ -134,3 +134,4 @@ dmypy.json
 result/
 wandb/
 *.ipynb
+*.pickle
