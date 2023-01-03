@@ -60,7 +60,7 @@ class RetrieverTrainer:
 
 
     def train(self):
-        train_dataloader = DataLoader(self.train_datasets, batch_size=self.config["batch_size"], shuffle=True)
+        train_dataloader = DataLoader(self.train_datasets, batch_size=self.config["batch_size"])
         valid_dataloader = DataLoader(self.valid_datasets, batch_size=self.config["batch_size"])
         hn_num = self.config["hard_negative_nums"]
         if hn_num > 0:
