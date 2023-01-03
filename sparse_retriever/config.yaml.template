@@ -1,0 +1,7 @@
+corpus_path: "wikipedia_documents.json 경로"
+pickle_path: "sparse retriever 결과 저장 경로(.pickle)"
+tokenizer_name: "transformer 토크나이저 이름(klue/bert-base)"
+validation_path: "../../ODQA/data/train_dataset"
+result_path: "top-k 결과 저장 경로(.csv)"
+sparse: "[tf-idf, BM25] 중 택 1"
+top_k: 3
