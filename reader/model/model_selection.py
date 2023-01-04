@@ -1,6 +1,6 @@
 from model.models import ExtractionModel
 from transformers import AutoConfig, AutoModelForQuestionAnswering, AutoTokenizer
-
+import torch
 
 class ModelSelection():
     def __init__(self, config):
