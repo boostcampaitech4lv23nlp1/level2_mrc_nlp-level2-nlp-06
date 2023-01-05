@@ -195,7 +195,7 @@ if __name__ == "__main__":
     for i in range(len(answer)):
         result[test_id[i]] = answer[i]
         
-    prediction_file = os.path.join("/opt/ml/results/", config["result_file_name"])
+    prediction_file = os.path.join(config["result_path"], config["result_file_name"])
     with open(prediction_file, "w", encoding="utf-8") as writer:
         writer.write(
             json.dumps(result, indent=4, ensure_ascii=False) + "\n"
@@ -209,7 +209,7 @@ if __name__ == "__main__":
             store.append(item["text"])
         n_best_result[test_id[i]] = str(store)
         
-    n_best_file = os.path.join("/opt/ml/results/", "n_best_" + config["result_file_name"])  
+    n_best_file = os.path.join(config["result_path"], "n_best_" + config["result_file_name"])  
     with open(n_best_file, "w", encoding="utf-8") as writer:
         writer.write(
             json.dumps(n_best_result, indent=4, ensure_ascii=False) + "\n"
