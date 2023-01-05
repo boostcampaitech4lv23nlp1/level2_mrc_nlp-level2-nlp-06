@@ -58,8 +58,3 @@ class ExtractionModel(nn.Module):
             hidden_states=outputs.hidden_states,
             attentions=outputs.attentions,
         )
-    
-    
-class GenerationModel(nn.Module):
-    def __init__(self, config, model_config):
-        pass

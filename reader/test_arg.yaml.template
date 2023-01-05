@@ -1,8 +1,7 @@
-retriver_path:  "/opt/ml/bm/top-5-bm25.csv"
+retriever_path:  "/opt/ml/bm/top-5-bm25.csv"
 result_path: "/opt/ml/results/"
 result_file_name: "prediction-1.json"
 eval_or_test: 1                         ## {0: evaluation, 1: test}
-train_type: 0                           ## {0: Extraction Based, 1: Generation Based}
 model_load_type: 0                      ## {0 = Load by "pt" file, 1 = Load by "checkpoint"}
 model_name: "klue/bert-base"
 model_path: "./save/retrain-model1.pt"
