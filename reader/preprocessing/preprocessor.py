@@ -14,7 +14,7 @@ class ExtractionProcessor():
         self.tokenizer = tokenizer
         
         if config["dataset"] == None:
-            self.all_data = load_from_disk("/opt/ml/input/data/train_dataset")
+            self.all_data = load_from_disk(config["train_data_path"])
         else:
             self.all_data = load_dataset(config["dataset"])
         
