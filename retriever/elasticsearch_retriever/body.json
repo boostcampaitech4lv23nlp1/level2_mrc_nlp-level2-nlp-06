@@ -1,0 +1,66 @@
+{
+    "settings":{
+        "analysis":{
+            "analyzer":{
+                "my_analyzer":{
+                    "type": "custom",
+                    "tokenizer":"nori_tokenizer",
+                    "decompound_mode":"mixed",
+                    "stopwords":"_korean_",
+                    "synonyms":"_korean_",
+                    "filter": ["lowercase",
+                                "nori_readingform",
+                                "nori_number",
+                                "cjk_bigram",
+                                "decimal_digit",
+                                "stemmer",
+                                "trim"]
+                }
+            }
+        },
+        "similarity":{
+            "BM25_similarity":{
+                "type":"BM25"
+            },
+            "DFR_similarity": {
+                "type": "DFR",
+                "basic_model": "g",
+                "after_effect": "l",
+                "normalization": "h2",
+                "normalization.h2.c": "3.0"
+            },
+            "DFI_similarity": {
+                "type": "DFI",
+                "independence_measure":"standardized"
+            },
+            "IB_similarity": {
+                "type": "IB",
+                "distribution": "ll",
+                "lambda": "df",
+                "normalization": "h2",
+                "normalization.h2.c": "3.0"
+            },
+            "LMDirichlet_similarity": {
+                "type": "LMDirichlet",
+                "mu": 2000
+            },
+            "LMJelinekMercer_similarity": {
+                "type": "LMJelinekMercer",
+                "lambda": 0.1
+            }
+
+        }
+    },
+    "mappings":{
+        "properties":{
+            "id":{
+                "type":"integer"
+            },
+            "text":{
+                "type":"text",
+                "analyzer":"my_analyzer",
+                "similarity":"BM25_similarity"
+            }
+        }
+    }
+}
