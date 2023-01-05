@@ -1,0 +1,7 @@
+index_name:  "bm25"                 #생성하거나 찾을 index 이름
+similarity: "BM25_similarity"       #생성시 설정할 similarity "BM25_similarity","DFR_similarity","DFI_similarity","IB_similarity","LMDirichlet_similarity","LMJelinekMercer_similarity" 중 하나
+wiki_path: "/opt/ml/input/data/clean_wiki_seperate_wiki_stride256_re.csv"   #wiki 혹은 다른 large corpus 경로
+topk: 30                            #하나의 question당 찾을 passage 개수
+data_path: "/opt/ml/input/data/test_dataset.csv"        #query를 위한 question column이 들어간 csv파일 경로
+ouput_path: "/opt/ml/source/es_bm25_test_top30.csv"        #결과를 저장할 경로(.csv)
+overwrite_index: True               #index이름 중복시 덮어쓰기 여부, False시 search만 진행 할 수 있음
