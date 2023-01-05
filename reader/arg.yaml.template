@@ -1,7 +1,6 @@
 ## 1. First consideration
 model_name: "klue/bert-base"
 model_save_path: "./save/retrain-model1.pt"
-train_type: 0                        ## {0: Extraction Based, 1: Generation Based}
 train_data_path: "/opt/ml/input/data/train_dataset"
 dataset: null #"squad_kor_v1"
 output_dir: "./outputs"

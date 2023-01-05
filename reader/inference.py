@@ -24,7 +24,7 @@ if __name__ == "__main__":
     device = torch.device(f"cuda" if torch.cuda.is_available() else "cpu")
     
     ## Get Data
-    data = pd.read_csv(config["retriver_path"])
+    data = pd.read_csv(config["retriever_path"])
     
     ## Store n_best_answer
     store = [[] for _ in range(len(data))]
@@ -195,7 +195,7 @@ if __name__ == "__main__":
     for i in range(len(answer)):
         result[test_id[i]] = answer[i]
         
-    prediction_file = os.path.join("/opt/ml/results/", config["result_file_name"])
+    prediction_file = os.path.join(config["result_path"], config["result_file_name"])
     with open(prediction_file, "w", encoding="utf-8") as writer:
         writer.write(
             json.dumps(result, indent=4, ensure_ascii=False) + "\n"
@@ -209,7 +209,7 @@ if __name__ == "__main__":
             store.append(item["text"])
         n_best_result[test_id[i]] = str(store)
         
-    n_best_file = os.path.join("/opt/ml/results/", "n_best_" + config["result_file_name"])  
+    n_best_file = os.path.join(config["result_path"], "n_best_" + config["result_file_name"])  
     with open(n_best_file, "w", encoding="utf-8") as writer:
         writer.write(
             json.dumps(n_best_result, indent=4, ensure_ascii=False) + "\n"
