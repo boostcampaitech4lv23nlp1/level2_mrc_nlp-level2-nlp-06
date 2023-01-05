@@ -24,7 +24,7 @@ if __name__ == "__main__":
     device = torch.device(f"cuda" if torch.cuda.is_available() else "cpu")
     
     ## Get Data
-    data = pd.read_csv(config["retriver_path"])
+    data = pd.read_csv(config["retriever_path"])
     
     ## Store n_best_answer
     store = [[] for _ in range(len(data))]

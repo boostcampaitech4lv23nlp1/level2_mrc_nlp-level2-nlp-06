@@ -6,7 +6,6 @@ import numpy as np
 import pandas as pd
 from model.model_selection import ModelSelection
 from trainer_qa import QuestionAnsweringTrainer
-from utils_qa import postprocess_qa_predictions, generarate_answer
 from preprocessing.preprocessor import ExtractionProcessor, GenerationProcessor
 from transformers import default_data_collator, TrainingArguments, EvalPrediction
 from transformers import DataCollatorForSeq2Seq, Seq2SeqTrainer, Seq2SeqTrainingArguments
