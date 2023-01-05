@@ -1,11 +1,5 @@
 import torch.nn as nn
-from transformers import (
-    AutoModel,
-    BertModel,
-    BigBirdModel,
-    BertPreTrainedModel,
-    BigBirdPreTrainedModel,
-)
+from transformers import AutoModel
 
 
 class DenseRetriever(nn.Module):
