@@ -1,1 +1,1 @@
-from .dense_retriever import DenseRetriever, BertEncoder, BigBirdEncoder
+from .dense_retriever import DenseRetriever
