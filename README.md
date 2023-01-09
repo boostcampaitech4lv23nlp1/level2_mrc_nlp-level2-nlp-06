@@ -15,7 +15,8 @@ MRC  task에서는  모델의  ODQA(Open-Domain  Question  Answering)  의  수�
 ![image](https://user-images.githubusercontent.com/112468961/211195170-f0425396-82ef-41f6-bd16-3f2e56ec523b.png)  
  첫  번째  단계는  입력된  질문에  대해  관련된  문서를 찾아주는  retriever  model이고,  
  두  번째  단계인  reader  model에서는  retriever model이  전달한  context를  이용해  입력된  query에  대한  정답을  찾게  됩니다.</br>  
- 대회 평가 기준은 EM(Exact Match) 와 micro F1 score 입니다.</br></br>
+ 대회 평가 기준은 EM(Exact Match) 와 micro F1 score 입니다.  
+ 학습에 사용된 dataset은 [KLUE-MRC dataset](https://huggingface.co/datasets/klue) 과 [KorQuAD 1.0 dataset입니다](https://korquad.github.io/KorQuad%201.0/)   </br></br>
 
 
 ## 2.팀원 소개
@@ -39,6 +40,7 @@ MRC  task에서는  모델의  ODQA(Open-Domain  Question  Answering)  의  수�
 |   ├──inference.py
 |   ├──test_arg.yaml.template
 |   ├──train.py
+|   ├──trainer_qa.py
 |   └──utils_qa.py
 |
 └──retriever
@@ -46,6 +48,8 @@ MRC  task에서는  모델의  ODQA(Open-Domain  Question  Answering)  의  수�
     |   ├──dataset
     |   |   ├──retriever_dataset.py
     |   |   └──utils.py
+    |   ├──get_features
+    |   |   └──faiss_retriever.py
     |   ├──model
     |   |   └──dense_retriever.py
     |   ├──utils
@@ -66,9 +70,7 @@ MRC  task에서는  모델의  ODQA(Open-Domain  Question  Answering)  의  수�
         ├──inference.py
         └──tf_idf.py
 ```
-**!!TODO:논의 사항!!**
-- dataset+wikipedia 추가해 놓을지?
-- TODO:if dataset upload, 저작권 마크 주의
+
 
 ## 4.How to Use
 1. retriever model과 reader model을 따로 train 합니다
@@ -80,7 +82,7 @@ MRC  task에서는  모델의  ODQA(Open-Domain  Question  Answering)  의  수�
 ```
 pip install -r requirements.txt
 ```
-
+---
 ### retriever model
 
 `dense_retriever`, `sparse_retriever`, `elasticsearch_retriever` 3가지 retriever가 구현되어 있습니다.  
@@ -131,8 +133,12 @@ python3 reader/train.py
 #### inference
 아래 코드를 실행시켜 retriever model이 추론한 passage를 이용, 정답에 대한 추론을 시작할 수 있습니다.
 ```
-pythhon3 reader/inference.py
+python3 reader/inference.py
 ```
 `reader/test_arg.yaml.template` 에서 추론 설정을 변경할 수 있습니다.</br></br>
+
+---
+### analysis
+`reader/analysis` 폴더 내 노트북들을 사용하여 데이터 및 결과를 분석할 수 있습니다.</br></br>
 ## 5.wrap-up report
 [MRC_NLP_팀 리포트(06조)_final.pdf](https://github.com/boostcampaitech4lv23nlp1/level2_mrc_nlp-level2-nlp-06/files/10369961/MRC_NLP_.06._final.pdf)
