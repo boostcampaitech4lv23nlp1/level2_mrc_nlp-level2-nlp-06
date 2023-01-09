@@ -81,18 +81,19 @@ MRC  task에서는  모델의  ODQA(Open-Domain  Question  Answering)  의  수�
 
 `dense_retriever`, `sparse_retriever`, `elasticsearch_retriever` 3가지 retriever가 구현되어 있습니다.  
 #### dense_retriever
+`retriever/dense_retriever/config.yaml.template`을 참고하여 config를 설정할 수 있습니다.
 - train : 아래 코드를 실행시켜 학습을 시작할 수 있습니다.
 ```
-python3 retriever/dense_retriever/train.py
+python3 retriever/dense_retriever/train.py --conf config.yaml
 ```
 - validation : 아래 코드를 실행시켜 평가를 시작할 수 있습니다. 평가 기준은 top-k accuracy (k=5,10,20,50,100) 입니다 
 
 ```
-python3 retriever/dense_retriever/validation.py
+python3 retriever/dense_retriever/validation.py --conf config.yaml
 ```
 - inference : 아래 코드를 실행시켜 reader model이 정답을 찾기 적절한 passage를 추론할 수 있습니다.
 ```
-python3 retriever/dense_retriever/inference.py
+python3 retriever/dense_retriever/inference.py --conf config.yaml
 ```
 `retriever/dense_retriever/config.yaml.template` 에서 학습 및 추론 설정을 변경할 수 있습니다.</br></br>
 
