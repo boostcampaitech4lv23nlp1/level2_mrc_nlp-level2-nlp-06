@@ -27,6 +27,7 @@ MRC  task에서는  모델의  ODQA(Open-Domain  Question  Answering)  의  수�
 
 ## 3.파일 구성
 ```
+├──requirements.txt
 ├──reader
 |   ├──analysis
 |   ├──model
@@ -68,20 +69,24 @@ MRC  task에서는  모델의  ODQA(Open-Domain  Question  Answering)  의  수�
 **!!TODO:논의 사항!!**
 - dataset+wikipedia 추가해 놓을지?
 - TODO:if dataset upload, 저작권 마크 주의
-- requirements.txt(add.for Elasticsearch) 추가해 놓을지? 
-- TODO : if so, add requirements.txt on GitHub/code tree/readme-howtouse
-- elasticsearch readme 지우고(add install elasticsaearch-8.5.3 on requirements.txt) tip 은 main readme로 이동 어떤찌?
 
 ## 4.How to Use
 1. retriever model과 reader model을 따로 train 합니다
 2. retriever model을 이용하여 wikipedia corpus에서 top-k passage를 inference 합니다
 3. 2.의 top-k passage를 reader model에 넣어 최종 답안을 inference합니다.
 
+### install requirements
+아래의 커맨드로 requirements.txt에 작성된 내용에 따라 패키지를 일괄 설치합니다.
+```
+pip install -r requirements.txt
+```
+
 ### retriever model
 
 `dense_retriever`, `sparse_retriever`, `elasticsearch_retriever` 3가지 retriever가 구현되어 있습니다.  
 #### dense_retriever
-`retriever/dense_retriever/config.yaml.template`을 참고하여 config를 설정할 수 있습니다.
+`retriever/dense_retriever/config.yaml.template`을 참고하여 config를 설정할 수 있습니다.  
+train.py, validation.py, inference.py 모두 --conf 라는 argument를 전달할 수 있습니다.
 - train : 아래 코드를 실행시켜 학습을 시작할 수 있습니다.
 ```
 python3 retriever/dense_retriever/train.py --conf config.yaml
