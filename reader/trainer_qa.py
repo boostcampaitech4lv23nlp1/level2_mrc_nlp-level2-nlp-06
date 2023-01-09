@@ -73,7 +73,7 @@ class QuestionAnsweringTrainer(Trainer):
                 if not key.startswith(f"{metric_key_prefix}_"):
                     metrics[f"{metric_key_prefix}_{key}"] = metrics.pop(key)
             metrics[f"{metric_key_prefix}_loss"] = output.metrics["eval_loss"]            
-                 
+            
             self.log(metrics)
         else:
             metrics = {}

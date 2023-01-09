@@ -1,4 +1,3 @@
-import nltk
 import numpy as np
 import pandas as pd
 from utils_qa import postprocess_qa_predictions
@@ -14,7 +13,7 @@ class ExtractionProcessor():
         self.tokenizer = tokenizer
         
         if config["dataset"] == None:
-            self.all_data = load_from_disk("/opt/ml/input/data/train_dataset")
+            self.all_data = load_from_disk(config["train_data_path"])
         else:
             self.all_data = load_dataset(config["dataset"])
         
@@ -197,106 +196,3 @@ class ExtractionProcessor():
     def get_eval_dataset(self): return self.eval_dataset
     def get_train_examples(self): return self.train_data
     def get_eval_examples(self): return self.eval_data
-
-
-class GenerationProcessor():
-    def __init__(self, config, tokenizer):
-        self.config = config
-        
-        self.tokenizer = tokenizer
-
-        ## TODO: for other dataset
-        #self.all_data = load_from_disk("/opt/ml/input/data/train_dataset")
-        self.all_data = load_dataset(config["dataset"])
-        
-        self.train_data = self.all_data["train"]
-        self.eval_data = self.all_data["validation"]
-        
-        ## Activate this only you are testing the code
-        self.train_data = self.train_data.select(range(config["num_sample"]))
-        self.eval_data = self.eval_data.select(range(config["num_sample"]))
-
-        self.column_names = self.train_data.column_names
-
-        self.train_dataset = train_dataset.map(
-            self.preprocess_function,
-            batched=True,
-            num_proc=self.config["num_proc"],
-            remove_columns=column_names,
-            load_from_cache_file=False,
-        )
-        
-        self.eval_dataset = eval_examples.map(
-            self.preprocess_function,
-            batched=True,
-            num_proc=self.config["num_proc"],
-            remove_columns=column_names,
-            load_from_cache_file=False,
-        )
-
-
-    def preprocess_function(self, examples):
-        inputs = [f"question: {q}  context: {c} </s>" for q, c in zip(examples["question"], examples["context"])]
-        targets = [f'{a["text"][0]} </s>' for a in examples['answers']]
-        model_inputs = tokenizer(
-            inputs,
-            max_length=max_source_length,
-            padding=padding,
-            truncation=True
-        )
-
-        # targets(label)을 위해 tokenizer 설정
-        labels = tokenizer(
-            text_target=targets,
-            max_length=max_target_length,
-            padding=padding,
-            truncation=True,
-        )
-
-        model_inputs["labels"] = labels["input_ids"] 
-        model_inputs["example_id"] = []
-        for i in range(len(model_inputs["labels"])):
-            model_inputs["example_id"].append(examples["id"][i])
-        return model_inputs
-    
-    
-    def postprocess_text(self, preds, labels):
-        """
-        postprocess는 nltk를 이용합니다.
-        Huggingface의 TemplateProcessing을 사용하여
-        정규표현식 기반으로 postprocess를 진행할 수 있지만
-        해당 미션에서는 nltk를 이용하여 간단한 후처리를 진행합니다
-        """
-
-        preds = [pred.strip() for pred in preds]
-        labels = [label.strip() for label in labels]
-            
-        preds = ["\n".join(nltk.sent_tokenize(pred)) for pred in preds]
-        labels = ["\n".join(nltk.sent_tokenize(label)) for label in labels]
-
-        return preds, labels
-    
-    
-    def compute_metrics(eval_preds):
-        preds, labels = eval_preds
-        if isinstance(preds, tuple):
-            preds = preds[0]
-        
-        decoded_preds = tokenizer.batch_decode(preds, skip_special_tokens=True)
-        # decoded_labels은 rouge metric을 위한 것이며, f1/em을 구할 때 사용되지 않음
-        decoded_labels = tokenizer.batch_decode(labels, skip_special_tokens=True)
-
-        # 간단한 post-processing
-        decoded_preds, decoded_labels = postprocess_text(decoded_preds, decoded_labels)
-
-        formatted_predictions = [{"id": ex["id"], "prediction_text": decoded_preds[i]} for i, ex in enumerate(datasets["validation"].select(range(max_val_samples)))]
-        references = [{"id": ex["id"], "answers": ex["answers"]} for ex in datasets["validation"].select(range(max_val_samples))]
-
-        result = metric.compute(predictions=formatted_predictions, references=references)
-        return result
-    
-    
-    def get_train_dataset(self): return self.train_dataset
-    def get_eval_dataset(self): return self.eval_dataset
-    def get_train_data(self): return self.train_data
-    def get_eval_data(self): return self.eval_data 

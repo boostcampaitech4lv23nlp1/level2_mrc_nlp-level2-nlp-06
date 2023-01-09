@@ -41,10 +41,10 @@ class RetrieverTrainer:
             )
             print("Load the pre-trained passage encoder...")
             self.p_encoder.load_state_dict(torch.load(config["p_encoder_load_path"]))
-
-        self.wikidataset = WikiDataset(config=config, tokenizer=self.train_datasets.tokenizer)
-        self.wikiloader = DataLoader(self.wikidataset, batch_size=16, shuffle=False)
-        self.topk = TOPK(config, self.train_datasets.tokenizer)
+        if config["eval_topk"]:
+            self.wikidataset = WikiDataset(config=config, tokenizer=self.train_datasets.tokenizer)
+            self.wikiloader = DataLoader(self.wikidataset, batch_size=16, shuffle=False)
+            self.topk = TOPK(config, self.train_datasets.tokenizer)
         
         if self.config["hard_negative_nums"] > 0:
             self.hn_dataset = HardNegatives(
@@ -113,7 +113,7 @@ class RetrieverTrainer:
                     temp = [hn_output[i*hn_num:(i+1)*hn_num].unsqueeze(0) for i in range(batch_size)]
                     hn_output = torch.cat(temp, dim=0)
                     temp = q_output.unsqueeze(1)
-                    score = torch.bmm(hn_output, temp.transpose(1, 2)).squeeze()
+                    score = torch.bmm(hn_output, temp.transpose(1, 2)).squeeze(1)
                     
                     sim_scores = torch.cat((sim_scores, score), dim=1)
                 
@@ -153,20 +153,21 @@ class RetrieverTrainer:
             valid_loss /= len(valid_dataloader)
             wandb.log({"valid_loss_per_epoch": valid_loss})
 
-            print("\n*** CHECKING THE TRAIN & VALIDATION ACCURACY ***\n")
-            p_outputs = self.topk.get_passage_outputs(self.p_encoder, epoch)
-            scores, label_outputs = self.topk.get_results(self.p_encoder, train_dataloader, p_outputs)
-            [train_top5, train_top20, train_top100], _ = self.topk.get_topk_results(p_outputs, scores, label_outputs, [5, 20, 100])
-            scores, label_outputs = self.topk.get_results(self.p_encoder, valid_dataloader, p_outputs)
-            [valid_top5, valid_top20, valid_top100], _ = self.topk.get_topk_results(p_outputs, scores, label_outputs, [5, 20, 100])
-            wandb.log({
-                "train_top5 accuracy" : train_top5,
-                "train_top20 accuracy" : train_top20,
-                "train_top100 accuracy" : train_top100,
-                "valid_top5 accuracy" : valid_top5,
-                "valid_top20 accuracy" : valid_top20,
-                "valid_top100 accuracy" : valid_top100,
-            })
+            if config["eval_topk"]:
+                print("\n*** CHECKING THE TRAIN & VALIDATION ACCURACY ***\n")
+                p_outputs = self.topk.get_passage_outputs(self.p_encoder, epoch)
+                scores, label_outputs = self.topk.get_results(self.p_encoder, train_dataloader, p_outputs)
+                [train_top5, train_top20, train_top100], _ = self.topk.get_topk_results(p_outputs, scores, label_outputs, [5, 20, 100])
+                scores, label_outputs = self.topk.get_results(self.p_encoder, valid_dataloader, p_outputs)
+                [valid_top5, valid_top20, valid_top100], _ = self.topk.get_topk_results(p_outputs, scores, label_outputs, [5, 20, 100])
+                wandb.log({
+                    "train_top5 accuracy" : train_top5,
+                    "train_top20 accuracy" : train_top20,
+                    "train_top100 accuracy" : train_top100,
+                    "valid_top5 accuracy" : valid_top5,
+                    "valid_top20 accuracy" : valid_top20,
+                    "valid_top100 accuracy" : valid_top100,
+                })
 
             print("\n*** SAVING THE CHECKPOINT ***\n")
             self.save_checkpoint(epoch, valid_loss)
@@ -191,7 +192,6 @@ class RetrieverTrainer:
         torch.cuda.empty_cache()
         p_outputs = self.p_encoder(**p_inputs)
         q_outputs = self.p_encoder(**q_inputs)
-
         sim_scores = torch.matmul(q_outputs, p_outputs.T).squeeze()
         sim_scores = sim_scores.view(batch_size, -1)
 

@@ -24,7 +24,7 @@ if __name__ == "__main__":
     device = torch.device(f"cuda" if torch.cuda.is_available() else "cpu")
     
     ## Get Data
-    data = pd.read_csv(config["retriver_path"])
+    data = pd.read_csv(config["retriever_path"])
     
     ## Store n_best_answer
     store = [[] for _ in range(len(data))]
@@ -117,22 +117,49 @@ if __name__ == "__main__":
                         "score": start_logits[start_index] + end_logits[end_index],
                         "start_logit": start_logits[start_index],
                         "end_logit": end_logits[end_index],
-                        "context": now_data["subdocument"]
+                        "context": now_data["subdocument"],
+                        "similarity_score": now_data["similarity_score"]
                     }
                 )
+    
+    ## Calculate the probability
+    for item in store:
+        scores = []
+        similaritys = []
+        if not item: continue
         
+        for score in item:
+            scores.append(score["score"])
+        for similarity in item:
+            similaritys.append(similarity["similarity_score"])
+        
+        sentence_scores = np.array(scores)
+        similaritys = np.array(similaritys)
+        exp_scores = np.exp(sentence_scores - np.max(sentence_scores))
+        exp_similarity = np.exp(similaritys - np.max(similaritys))
+        probs = exp_scores / exp_scores.sum()
+        similarity_probs = exp_similarity / exp_similarity.sum()
+
+        for i, unit in enumerate(item):
+            unit["probs"] = probs[i]
+            unit["similarity_probs"] = similarity_probs[i]
+    
     ## Get Predictions & Answers
     predictions = []
     for item in store:
         if not item: continue
         predictions.append(
             sorted(
-                item, key=lambda x: x["score"], reverse=True
+                item, key=lambda x: x["probs"] * x["similarity_probs"], reverse=True
             )[:config["n_best_size"]]
         )
     
     answer = []
     for prediction in predictions:
+        topk_score = np.array([pred.pop("similarity_score") for pred in prediction])
+        exp_topk_score = np.exp(topk_score - np.max(topk_score))
+        topk_probs = exp_topk_score / exp_topk_score.sum()
+        
         scores = np.array([pred.pop("score") for pred in prediction])
         exp_scores = np.exp(scores - np.max(scores))
         probs = exp_scores / exp_scores.sum()
@@ -168,7 +195,7 @@ if __name__ == "__main__":
     for i in range(len(answer)):
         result[test_id[i]] = answer[i]
         
-    prediction_file = os.path.join("/opt/ml/results/", config["result_file_name"])
+    prediction_file = os.path.join(config["result_path"], config["result_file_name"])
     with open(prediction_file, "w", encoding="utf-8") as writer:
         writer.write(
             json.dumps(result, indent=4, ensure_ascii=False) + "\n"
@@ -182,7 +209,7 @@ if __name__ == "__main__":
             store.append(item["text"])
         n_best_result[test_id[i]] = str(store)
         
-    n_best_file = os.path.join("/opt/ml/results/", "n_best_" + config["result_file_name"])  
+    n_best_file = os.path.join(config["result_path"], "n_best_" + config["result_file_name"])  
     with open(n_best_file, "w", encoding="utf-8") as writer:
         writer.write(
             json.dumps(n_best_result, indent=4, ensure_ascii=False) + "\n"

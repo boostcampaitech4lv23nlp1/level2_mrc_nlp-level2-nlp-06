@@ -2,6 +2,7 @@
 
 random_seed: 42
 device: 'cuda'
+eval_topk: True # If set to true, it'll check top-k accuracy every epochs. But it tooks very long time...
 
 
 ### Weights & Biases ###

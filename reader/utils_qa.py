@@ -285,15 +285,3 @@ def postprocess_qa_predictions(
                 )
 
     return all_predictions
-
-def generarate_answer(sample):
-    inputs = f'question: {sample["question"]}  context: {sample["context"]} </s>'
-    print(inputs)
-    sample = tokenizer(inputs, max_length=max_source_length, padding=padding, truncation=True, return_tensors='pt')
-    sample = sample.to("cuda:0")
-    outputs = model.generate(**sample, max_length=max_target_length, num_beams=num_beams)
-    pred = tokenizer.decode(outputs[0], skip_special_tokens=True)
-
-    pred = "\n".join(nltk.sent_tokenize(pred))
-
-    return pred
